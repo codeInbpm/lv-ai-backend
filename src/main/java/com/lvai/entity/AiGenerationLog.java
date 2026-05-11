@@ -49,4 +49,7 @@ public class AiGenerationLog {
 
     @TableField(fill = FieldFill.INSERT)
     private LocalDateTime createTime;
+
+    @Schema(description = "推理内容")
+    private String reasoningContent;
 }

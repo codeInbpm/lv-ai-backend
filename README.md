@@ -4,16 +4,16 @@
 
 ## 技术栈
 
-| 组件 | 版本 | 说明 |
-|------|------|------|
-| Java | 21 | LTS版本 |
-| Spring Boot | 3.3.4 | 核心框架 |
-| MyBatis-Plus | 3.5.7 | ORM框架 |
+| 组件 | 版本     | 说明 |
+|------|--------|------|
+| Java | 17      | LTS版本 |
+| Spring Boot | 3.3.4  | 核心框架 |
+| MyBatis-Plus | 3.5.7  | ORM框架 |
 | Sa-Token | 1.38.0 | 鉴权框架 |
-| Redis | 7.x | 缓存/Token存储 |
-| MySQL | 8.0 | 关系型数据库 |
+| Redis | 7.x    | 缓存/Token存储 |
+| MySQL | 8.0    | 关系型数据库 |
 | Hutool | 5.8.26 | 工具库 |
-| Knife4j | 4.5.0 | API文档 |
+| Knife4j | 4.5.0  | API文档 |
 
 ## 快速开始
 

@@ -1,3 +1,6 @@
+ai:
+  provider: deepseek # 可选值根据你的代码逻辑而定，如: openai, dashscope, deepseek
+
 server:
   port: 8080
   servlet:
@@ -40,6 +43,41 @@ spring:
     date-format: yyyy-MM-dd HH:mm:ss
     time-zone: GMT+8
     default-property-inclusion: non_null
+  ai:
+    openai: # OpenAI 官方
+      api-key: sk-aN6nWn3fILjrgLFT0fC4Aa60B72e4253826c77B29dC94f17
+      base-url: https://api.gptsapi.net
+    dashscope:
+          api-key: sk-49a86d805ad649a694d89dd9996d4b4b
+          chat:
+            options:
+              model: qwen-max
+              max-tokens: 4096
+              enable-search: false #(禁用) 互联网搜索服务
+    deepseek:
+      api-key: sk-e94db327cc7d457d99a8de8810fc6b12
+#      base-url: https://dashscope.aliyuncs.com/compatible-mode/v1
+      chat:
+        options:
+          model: deepseek-v3.2
+          max-tokens: 4096
+    moonshot:
+      api-key: sk-abc
+    qianfan: # 文心一言
+      api-key: x0cuLZ7XsaTCU08vuJWO87Lg
+      secret-key: R9mYF9dl9KASgi5RUq0FQt3wRisSnOcK
+    anthropic: # Anthropic Claude
+      api-key: sk-muubv7cXeLw0Etgs743f365cD5Ea44429946Fa7e672d8942
+    azure: # OpenAI 微软
+      openai:
+        endpoint: https://eastusprejade.openai.azure.com
+    minimax:
+      api-key: xxxx
+    stabilityai:
+      api-key: sk-e53UqbboF8QJCscYvzJscJxJXoFcFg4iJjl1oqgE7baJETmx
+    zhipuai: # 智谱 AI
+      api-key: 32f84543e54eee31f8d56b2bd6020573.3vh9idLJZ2ZhxDEs
+
 
 mybatis-plus:
   mapper-locations: classpath*:mapper/**/*.xml
@@ -95,24 +133,13 @@ tencent:
     key: your_tencent_map_key_here
     base-url: https://apis.map.qq.com
 
-# AI配置（支持切换）
-ai:
-  provider: deepseek
-  deepseek:
-    api-key: your_deepseek_api_key_here
-    base-url: https://api.deepseek.com/v1
-    model: deepseek-chat
-    max-tokens: 4096
-  qwen:
-    api-key: sk-49a86d805ad649a694d89dd9996d4b4b
-    base-url: https://dashscope.aliyuncs.com/compatible-mode/v1
-    model: qwen-max
-    max-tokens: 4096
-  openai:
-    api-key: your_openai_api_key_here
-    base-url: https://api.openai.com/v1
-    model: gpt-4o-mini
-    max-tokens: 4096
+
+minio:
+  endpoint: http://139.224.27.132:9000
+  accessKey: admin
+  secretKey: endless@028btc
+  bucketName: lvtuAI
+
 
 logging:
   level:
