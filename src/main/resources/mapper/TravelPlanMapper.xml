@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.lvai.mapper.TravelPlanMapper">
+
+    <select id="selectPublicPlans" resultType="com.lvai.entity.TravelPlan">
+        SELECT * FROM travel_plan
+        WHERE deleted = 0
+          AND is_public = 1
+          <if test="keyword != null and keyword != ''">
+              AND (title LIKE CONCAT('%', #{keyword}, '%')
+                  OR description LIKE CONCAT('%', #{keyword}, '%'))
+          </if>
+          <if test="destination != null and destination != ''">
+              AND destination LIKE CONCAT('%', #{destination}, '%')
+          </if>
+        ORDER BY collect_count DESC, view_count DESC, create_time DESC
+    </select>
+
+</mapper>

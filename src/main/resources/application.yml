@@ -1,0 +1,120 @@
+server:
+  port: 8080
+  servlet:
+    context-path: /api
+
+spring:
+  application:
+    name: lv-ai-backend
+  datasource:
+    type: com.alibaba.druid.pool.DruidDataSource
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://139.224.27.132:3306/lv_ai?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=false&serverTimezone=GMT%2B8&allowPublicKeyRetrieval=true
+    username: root
+    password: endless@028btc
+    druid:
+      initial-size: 5
+      min-idle: 5
+      max-active: 20
+      max-wait: 60000
+      time-between-eviction-runs-millis: 60000
+      min-evictable-idle-time-millis: 300000
+      validation-query: SELECT 1 FROM DUAL
+      test-while-idle: true
+      test-on-borrow: false
+      test-on-return: false
+  data:
+    redis:
+      host: 139.224.27.132
+      port: 6379
+      password: endless@028btc
+      database: 1
+      timeout: 10000ms
+      lettuce:
+        pool:
+          min-idle: 0
+          max-idle: 8
+          max-active: 8
+          max-wait: -1ms
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: GMT+8
+    default-property-inclusion: non_null
+
+mybatis-plus:
+  mapper-locations: classpath*:mapper/**/*.xml
+  type-aliases-package: com.lvai.entity
+  global-config:
+    db-config:
+      id-type: auto
+      logic-delete-field: deleted
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+
+sa-token:
+  token-name: Authorization
+  timeout: 2592000
+  active-timeout: -1
+  is-concurrent: true
+  is-share: false
+  token-style: uuid
+  is-log: false
+
+knife4j:
+  enable: true
+  setting:
+    language: zh_cn
+  openapi:
+    title: 旅途AI接口文档
+    description: AI驱动的个性化智能旅游规划小程序
+    version: v1.0.0
+    group:
+      default:
+        api-rule: package
+        api-rule-resources:
+          - com.lvai.controller
+
+# 微信小程序配置
+wechat:
+  mini:
+    app-id: wx211854ff12b5023a
+    app-secret: 9a0f6b438fedff527a51bb871c192d16
+    grant-type: authorization_code
+    login-url: https://api.weixin.qq.com/sns/jscode2session
+    # 订阅消息模板 ID（公共模板「留言提醒」, 字段: thing1 用户名称 / thing2 备注消息 / time3 留言日期）
+    template-id: bcMzwddS-N1kX6edujEwu1pDmt0rXPYCXhCzD7HdAhk
+    # formal/trial/developer (正式版/体验版/开发版)
+    miniprogram-state: formal
+
+# 腾讯地图配置
+tencent:
+  map:
+    key: your_tencent_map_key_here
+    base-url: https://apis.map.qq.com
+
+# AI配置（支持切换）
+ai:
+  provider: deepseek
+  deepseek:
+    api-key: your_deepseek_api_key_here
+    base-url: https://api.deepseek.com/v1
+    model: deepseek-chat
+    max-tokens: 4096
+  qwen:
+    api-key: sk-49a86d805ad649a694d89dd9996d4b4b
+    base-url: https://dashscope.aliyuncs.com/compatible-mode/v1
+    model: qwen-max
+    max-tokens: 4096
+  openai:
+    api-key: your_openai_api_key_here
+    base-url: https://api.openai.com/v1
+    model: gpt-4o-mini
+    max-tokens: 4096
+
+logging:
+  level:
+    com.lvai: debug
+    org.springframework.web: info
