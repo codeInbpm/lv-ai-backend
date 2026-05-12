@@ -1,5 +1,5 @@
 ai:
-  provider: deepseek # 可选值根据你的代码逻辑而定，如: openai, dashscope, deepseek
+  provider: qwen # 可选值根据你的代码逻辑而定，如: openai, dashscope, deepseek
 
 server:
   port: 8080
