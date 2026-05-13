@@ -130,7 +130,7 @@ wechat:
 # 腾讯地图配置
 tencent:
   map:
-    key: your_tencent_map_key_here
+    key: 66ABZ-QFMRI-BQWGG-UTPBO-NEZA3-SLFGI
     base-url: https://apis.map.qq.com
 
 

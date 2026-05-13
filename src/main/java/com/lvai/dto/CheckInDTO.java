@@ -1,9 +1,8 @@
 package com.lvai.dto;
-
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
+import javax.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import java.util.List;
 
@@ -34,9 +33,6 @@ public class CheckInDTO {
     @Schema(description = "费用类型: 1餐饮 2住宿 3交通 4门票 5购物 6其他")
     private Integer costType;
 
-    @Schema(description = "图片URLs")
-    private List<String> images;
-
     @Schema(description = "位置名称")
     private String locationName;
 
@@ -45,4 +41,9 @@ public class CheckInDTO {
 
     @Schema(description = "纬度")
     private BigDecimal lat;
+
+    @Schema(description = "图片URLs")
+    private List<String> images;
+
+    private BigDecimal cost;
 }
