@@ -13,9 +13,13 @@ public class StrategyPost implements Serializable {
     @TableId(type = IdType.AUTO)
     private Long id;
     private Long userId;
+    private Long authorId;
+    private String externalId;
     private String title;
     private String coverUrl;
     private String content;
+    private String aiSummary;
+    private String aiItinerary;
     private String destination;
     private Integer days;
     private Integer likeCount;
