@@ -1,0 +1,36 @@
+package com.lvai.entity;
+
+import com.baomidou.mybatisplus.annotation.*;
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Data;
+import java.io.Serializable;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+
+@Data
+@TableName("destination")
+@Schema(description = "热门目的地")
+public class Destination implements Serializable {
+    @TableId(type = IdType.AUTO)
+    private Long id;
+    private String name;
+    private Long parentId;
+    private Integer level;
+    private BigDecimal lat;
+    private BigDecimal lng;
+    private String description;
+    private String imageUrl;
+    private Integer viewCount;
+    private Integer likeCount;
+    private Integer isHot;
+    private Integer sortOrder;
+    
+    @TableField(fill = FieldFill.INSERT)
+    private LocalDateTime createTime;
+    
+    @TableField(fill = FieldFill.INSERT_UPDATE)
+    private LocalDateTime updateTime;
+    
+    @TableLogic
+    private Integer deleted;
+}
