@@ -1,0 +1,52 @@
+package com.lvai.entity;
+
+import com.baomidou.mybatisplus.annotation.*;
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Data;
+import java.io.Serializable;
+import java.time.LocalDateTime;
+
+@Data
+@TableName("user_note")
+@Schema(description = "用户笔记")
+public class UserNote implements Serializable {
+
+    @TableId(type = IdType.AUTO)
+    private Long id;
+
+    @Schema(description = "用户ID")
+    private Long userId;
+
+    @Schema(description = "笔记标题")
+    private String title;
+
+    @Schema(description = "笔记内容(富文本)")
+    private String content;
+
+    @Schema(description = "封面图片URL")
+    private String coverUrl;
+
+    @Schema(description = "点赞数")
+    private Integer likeCount;
+
+    @Schema(description = "评论数")
+    private Integer commentCount;
+
+    @Schema(description = "状态(0草稿 1已发布)")
+    private Integer status;
+
+    @Schema(description = "是否精选(0否 1是，同步至攻略)")
+    private Integer isFeatured;
+
+    @TableField(fill = FieldFill.INSERT)
+    @Schema(description = "创建时间")
+    private LocalDateTime createTime;
+
+    @TableField(fill = FieldFill.INSERT_UPDATE)
+    @Schema(description = "更新时间")
+    private LocalDateTime updateTime;
+
+    @TableLogic
+    @Schema(description = "是否删除(0未删 1已删)")
+    private Integer deleted;
+}

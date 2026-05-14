@@ -71,10 +71,15 @@ public class ProfileController {
                 .eq(TravelPlan::getUserId, userId).eq(TravelPlan::getStatus, 3));
         long ongoing = planService.count(new LambdaQueryWrapper<TravelPlan>()
                 .eq(TravelPlan::getUserId, userId).eq(TravelPlan::getStatus, 2));
+                
+        com.lvai.service.IUserNoteService userNoteService = cn.hutool.extra.spring.SpringUtil.getBean(com.lvai.service.IUserNoteService.class);
+        long notesCount = userNoteService.count(new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<com.lvai.entity.UserNote>().eq(com.lvai.entity.UserNote::getUserId, userId));
+        
         return Result.success(java.util.Map.of(
                 "totalPlans", total,
                 "completedPlans", completed,
-                "ongoingPlans", ongoing
+                "ongoingPlans", ongoing,
+                "notesCount", notesCount
         ));
     }
 }
