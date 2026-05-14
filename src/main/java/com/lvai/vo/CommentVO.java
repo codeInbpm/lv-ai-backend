@@ -40,6 +40,9 @@ public class CommentVO {
     @Schema(description = "点赞数")
     private Integer likeCount;
 
+    @Schema(description = "是否已点赞")
+    private Boolean hasLiked;
+
     @Schema(description = "子评论列表")
     private List<CommentVO> children;
 }

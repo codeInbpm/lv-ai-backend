@@ -81,9 +81,26 @@ public class StrategyInteractionController {
 
     @GetMapping("/{id}/comments")
     @Operation(summary = "获取攻略评论列表")
-    public Result<List<CommentVO>> getComments(@PathVariable Long id) {
-        List<CommentVO> comments = strategyCommentService.getCommentsByStrategyId(id);
+    public Result<List<CommentVO>> getComments(@PathVariable Long id, @RequestParam(defaultValue = "latest") String sort) {
+        Long userId = StpUtil.isLogin() ? StpUtil.getLoginIdAsLong() : null;
+        List<CommentVO> comments = strategyCommentService.getCommentsByStrategyId(id, userId, sort);
         return Result.success(comments);
+    }
+
+    @PostMapping("/comment/{id}/like")
+    @Operation(summary = "点赞/取消点赞评论")
+    public Result<Boolean> toggleCommentLike(@PathVariable Long id) {
+        long userId = StpUtil.getLoginIdAsLong();
+        boolean isLiked = strategyCommentService.toggleCommentLike(id, userId);
+        return Result.success(isLiked);
+    }
+
+    @DeleteMapping("/comment/{id}")
+    @Operation(summary = "删除自己的评论")
+    public Result<Void> deleteComment(@PathVariable Long id) {
+        long userId = StpUtil.getLoginIdAsLong();
+        strategyCommentService.deleteComment(id, userId);
+        return Result.success();
     }
 
     @GetMapping("/{id}/status")
