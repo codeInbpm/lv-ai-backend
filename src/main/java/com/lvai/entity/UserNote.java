@@ -26,6 +26,9 @@ public class UserNote implements Serializable {
     @Schema(description = "封面图片URL")
     private String coverUrl;
 
+    @Schema(description = "多图列表(JSON)")
+    private String images;
+
     @Schema(description = "点赞数")
     private Integer likeCount;
 

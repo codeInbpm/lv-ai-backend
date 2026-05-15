@@ -138,7 +138,7 @@ minio:
   endpoint: http://139.224.27.132:9000
   accessKey: admin
   secretKey: endless@028btc
-  bucketName: lvtuAI
+  bucketName: lvtu-ai
 
 
 logging:

@@ -6,13 +6,16 @@ import com.lvai.dto.CommunityStatsDTO;
 import com.lvai.service.ICommunityService;
 import com.lvai.service.IUserBrowsingHistoryService;
 import com.lvai.service.IContentDraftService;
+import com.lvai.service.IFileService;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.alibaba.fastjson2.JSON;
+import com.alibaba.fastjson2.JSONObject;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @Tag(name = "社区互动管理", description = "获取收藏、草稿、历史记录等信息")
 @RestController
@@ -23,6 +26,7 @@ public class CommunityController {
     private final ICommunityService communityService;
     private final IUserBrowsingHistoryService historyService;
     private final IContentDraftService draftService;
+    private final IFileService fileService;
 
     @GetMapping("/stats")
     @Operation(summary = "获取用户社区数据统计(关注/粉丝/获赞)")
@@ -58,5 +62,46 @@ public class CommunityController {
                         .eq(com.lvai.entity.ContentDraft::getUserId, userId)
                         .orderByDesc(com.lvai.entity.ContentDraft::getUpdateTime)
         ));
+    }
+
+    @PostMapping("/drafts/save")
+    @Operation(summary = "保存或更新草稿")
+    public Result<Void> saveDraft(@RequestBody com.lvai.entity.ContentDraft draft) {
+        Long userId = StpUtil.getLoginIdAsLong();
+        draft.setUserId(userId);
+        draftService.saveOrUpdate(draft);
+        return Result.success();
+    }
+
+    @DeleteMapping("/drafts/{id}")
+    @Operation(summary = "删除草稿并清理MinIO文件")
+    public Result<Void> deleteDraft(@PathVariable Long id) {
+        Long userId = StpUtil.getLoginIdAsLong();
+        com.lvai.entity.ContentDraft draft = draftService.getOne(
+                new LambdaQueryWrapper<com.lvai.entity.ContentDraft>()
+                        .eq(com.lvai.entity.ContentDraft::getId, id)
+                        .eq(com.lvai.entity.ContentDraft::getUserId, userId)
+        );
+        
+        if (draft != null) {
+            // 解析草稿内容中的图片并删除
+            try {
+                JSONObject contentObj = JSON.parseObject(draft.getContent());
+                // 假设 JSON 中有 coverUrl 或 images 数组
+                if (contentObj.containsKey("coverUrl")) {
+                    fileService.deleteFile(contentObj.getString("coverUrl"));
+                }
+                if (contentObj.containsKey("images")) {
+                    List<String> images = contentObj.getList("images", String.class);
+                    if (images != null) {
+                        images.forEach(fileService::deleteFile);
+                    }
+                }
+            } catch (Exception e) {
+                // 解析失败不影响删除草稿记录
+            }
+            draftService.removeById(id);
+        }
+        return Result.success();
     }
 }
