@@ -13,7 +13,7 @@ public interface ICommunityService {
     CommunityStatsDTO getUserCommunityStats(Long userId);
 
     /**
-     * 获取用户收藏的攻略
+     * 获取用户收藏的攻略/笔记
      */
-    List<StrategyPost> getCollectedStrategies(Long userId);
+    List<com.lvai.vo.UserCollectionVO> getCollections(Long userId, Integer type);
 }

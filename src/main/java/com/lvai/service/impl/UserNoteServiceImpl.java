@@ -25,6 +25,10 @@ public class UserNoteServiceImpl extends ServiceImpl<UserNoteMapper, UserNote> i
     private final StrategyLikeMapper strategyLikeMapper;
     private final StrategyPostMapper strategyPostMapper;
     private final UserCollectionMapper userCollectionMapper;
+    private final com.lvai.mapper.NoteLikeMapper noteLikeMapper;
+    private final com.lvai.mapper.NoteCommentMapper noteCommentMapper;
+    private final com.lvai.mapper.NoteCommentLikeMapper noteCommentLikeMapper;
+    private final com.lvai.service.IFileService fileService;
 
     @Override
     public UserNote publishNote(Long userId, UserNote note) {
@@ -92,5 +96,38 @@ public class UserNoteServiceImpl extends ServiceImpl<UserNoteMapper, UserNote> i
         List<StrategyPost> posts = strategyPostMapper.selectBatchIds(strategyIds);
         resultPage.setRecords(posts);
         return resultPage;
+    }
+    @Override
+    @org.springframework.transaction.annotation.Transactional
+    public void deleteNoteWithFiles(Long noteId) {
+        UserNote note = this.getById(noteId);
+        if (note != null) {
+            // 1. 删除点赞记录
+            noteLikeMapper.delete(new LambdaQueryWrapper<com.lvai.entity.NoteLike>().eq(com.lvai.entity.NoteLike::getNoteId, noteId));
+            
+            // 2. 删除评论及评论点赞
+            List<com.lvai.entity.NoteComment> comments = noteCommentMapper.selectList(new LambdaQueryWrapper<com.lvai.entity.NoteComment>().eq(com.lvai.entity.NoteComment::getNoteId, noteId));
+            if (!comments.isEmpty()) {
+                List<Long> commentIds = comments.stream().map(com.lvai.entity.NoteComment::getId).collect(Collectors.toList());
+                noteCommentLikeMapper.delete(new LambdaQueryWrapper<com.lvai.entity.NoteCommentLike>().in(com.lvai.entity.NoteCommentLike::getCommentId, commentIds));
+                noteCommentMapper.deleteBatchIds(commentIds);
+            }
+
+            // 3. 删除 MinIO 文件
+            if (note.getCoverUrl() != null) {
+                fileService.deleteFile(note.getCoverUrl());
+            }
+            if (note.getImages() != null) {
+                try {
+                    List<String> images = com.alibaba.fastjson2.JSON.parseArray(note.getImages(), String.class);
+                    if (images != null) {
+                        images.forEach(fileService::deleteFile);
+                    }
+                } catch (Exception e) {}
+            }
+            
+            // 4. 最后删除笔记记录 (不删除 UserCollection 记录，以便前端显示“已删除”)
+            this.removeById(noteId);
+        }
     }
 }

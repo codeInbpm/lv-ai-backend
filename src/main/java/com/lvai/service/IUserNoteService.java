@@ -10,4 +10,5 @@ public interface IUserNoteService extends IService<UserNote> {
     Page<UserNote> getMyNotes(Long userId, int page, int size);
     Page<StrategyPost> getMyLiked(Long userId, int page, int size);
     Page<StrategyPost> getMyCollected(Long userId, int page, int size);
+    void deleteNoteWithFiles(Long noteId);
 }

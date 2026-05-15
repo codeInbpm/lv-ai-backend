@@ -29,6 +29,21 @@ public class UserNote implements Serializable {
     @Schema(description = "多图列表(JSON)")
     private String images;
 
+    @Schema(description = "地点名称")
+    private String locationName;
+
+    @Schema(description = "地点地址")
+    private String locationAddress;
+
+    @Schema(description = "经度")
+    private java.math.BigDecimal longitude;
+
+    @Schema(description = "纬度")
+    private java.math.BigDecimal latitude;
+
+    @Schema(description = "话题标签(逗号分隔)")
+    private String topicTags;
+
     @Schema(description = "点赞数")
     private Integer likeCount;
 

@@ -35,11 +35,11 @@ public class CommunityController {
         return Result.success(communityService.getUserCommunityStats(userId));
     }
 
-    @GetMapping("/collections/strategies")
-    @Operation(summary = "获取用户收藏的攻略")
-    public Result<java.util.List<com.lvai.entity.StrategyPost>> getCollectedStrategies() {
+    @GetMapping("/collections/{type}")
+    @Operation(summary = "获取用户收藏列表(1:笔记, 3:攻略)")
+    public Result<List<com.lvai.vo.UserCollectionVO>> getCollections(@PathVariable Integer type) {
         Long userId = StpUtil.getLoginIdAsLong();
-        return Result.success(communityService.getCollectedStrategies(userId));
+        return Result.success(communityService.getCollections(userId, type));
     }
 
     @GetMapping("/history")
@@ -103,5 +103,16 @@ public class CommunityController {
             draftService.removeById(id);
         }
         return Result.success();
+    }
+
+    @GetMapping("/drafts/{id}")
+    @Operation(summary = "获取草稿详情")
+    public Result<com.lvai.entity.ContentDraft> getDraftDetail(@PathVariable Long id) {
+        Long userId = StpUtil.getLoginIdAsLong();
+        return Result.success(draftService.getOne(
+                new LambdaQueryWrapper<com.lvai.entity.ContentDraft>()
+                        .eq(com.lvai.entity.ContentDraft::getId, id)
+                        .eq(com.lvai.entity.ContentDraft::getUserId, userId)
+        ));
     }
 }

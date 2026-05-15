@@ -31,19 +31,46 @@ public class CommunityServiceImpl implements ICommunityService {
         return stats;
     }
 
+    private final com.lvai.service.IUserNoteService userNoteService;
+
     @Override
-    public List<StrategyPost> getCollectedStrategies(Long userId) {
+    public List<com.lvai.vo.UserCollectionVO> getCollections(Long userId, Integer type) {
         List<UserCollection> collections = collectionService.list(
                 new LambdaQueryWrapper<UserCollection>()
                         .eq(UserCollection::getUserId, userId)
-                        .eq(UserCollection::getTargetType, 3) // 3 represents strategy
+                        .eq(UserCollection::getTargetType, type)
                         .orderByDesc(UserCollection::getCreateTime)
         );
+        if (collections.isEmpty()) return Collections.emptyList();
+
         List<Long> targetIds = collections.stream().map(UserCollection::getTargetId).collect(Collectors.toList());
-        if (targetIds.isEmpty()) return Collections.emptyList();
         
-        return strategyPostService.list(
-                new LambdaQueryWrapper<StrategyPost>().in(StrategyPost::getId, targetIds)
-        );
+        if (type == 3) { // 攻略
+            List<StrategyPost> posts = strategyPostService.list(new LambdaQueryWrapper<StrategyPost>().in(StrategyPost::getId, targetIds));
+            java.util.Map<Long, StrategyPost> postMap = posts.stream().collect(Collectors.toMap(StrategyPost::getId, p -> p));
+            return collections.stream().map(c -> {
+                com.lvai.vo.UserCollectionVO vo = new com.lvai.vo.UserCollectionVO();
+                vo.setId(c.getId());
+                vo.setTargetId(c.getTargetId());
+                vo.setTargetType(c.getTargetType());
+                vo.setData(postMap.get(c.getTargetId()));
+                vo.setIsDeleted(vo.getData() == null);
+                return vo;
+            }).collect(Collectors.toList());
+        } else if (type == 1) { // 笔记
+            List<com.lvai.entity.UserNote> notes = userNoteService.list(new LambdaQueryWrapper<com.lvai.entity.UserNote>().in(com.lvai.entity.UserNote::getId, targetIds));
+            java.util.Map<Long, com.lvai.entity.UserNote> noteMap = notes.stream().collect(Collectors.toMap(com.lvai.entity.UserNote::getId, n -> n));
+            return collections.stream().map(c -> {
+                com.lvai.vo.UserCollectionVO vo = new com.lvai.vo.UserCollectionVO();
+                vo.setId(c.getId());
+                vo.setTargetId(c.getTargetId());
+                vo.setTargetType(c.getTargetType());
+                vo.setData(noteMap.get(c.getTargetId()));
+                vo.setIsDeleted(vo.getData() == null);
+                return vo;
+            }).collect(Collectors.toList());
+        }
+        
+        return Collections.emptyList();
     }
 }

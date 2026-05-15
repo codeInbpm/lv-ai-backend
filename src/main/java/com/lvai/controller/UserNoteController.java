@@ -51,5 +51,24 @@ public class UserNoteController {
             @RequestParam(defaultValue = "10") int size) {
         long userId = StpUtil.getLoginIdAsLong();
         return Result.success(userNoteService.getMyCollected(userId, page, size));
+
+    }
+    @GetMapping("/{id}")
+    @Operation(summary = "获取笔记详情")
+    public Result<UserNote> getNoteDetail(@PathVariable Long id) {
+        return Result.success(userNoteService.getById(id));
+    }
+
+    @DeleteMapping("/{id}")
+    @Operation(summary = "删除笔记")
+    public Result<Void> deleteNote(@PathVariable Long id) {
+        long userId = StpUtil.getLoginIdAsLong();
+        UserNote note = userNoteService.getById(id);
+        if (note != null && note.getUserId().equals(userId)) {
+            // 删除关联文件
+            userNoteService.deleteNoteWithFiles(id);
+            return Result.success();
+        }
+        return Result.error(403, "无权删除该笔记");
     }
 }
