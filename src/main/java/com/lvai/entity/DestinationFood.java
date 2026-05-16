@@ -15,6 +15,8 @@ public class DestinationFood implements Serializable {
     private Long id;
     private Long destinationId;
     private String name;
+    private BigDecimal score;
+    private String tags;
     private BigDecimal lat;
     private BigDecimal lng;
     private String description;

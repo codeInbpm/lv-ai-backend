@@ -15,6 +15,11 @@ public class DestinationSpot implements Serializable {
     private Long id;
     private Long destinationId;
     private String name;
+    private BigDecimal score;
+    private Integer commentCount;
+    private String tags;
+    private String openTime;
+    private String ticketInfo;
     private BigDecimal lat;
     private BigDecimal lng;
     private String description;
@@ -22,6 +27,7 @@ public class DestinationSpot implements Serializable {
     private String address;
     private Integer suggestedDuration;
     private Integer isMustVisit;
+    private String rankInfo;
     private Integer sortOrder;
 
     @TableField(fill = FieldFill.INSERT)
