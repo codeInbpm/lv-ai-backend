@@ -30,6 +30,11 @@ public class FileServiceImpl implements IFileService {
 
     @Override
     public String uploadFile(MultipartFile file) {
+        return uploadFile(file, null);
+    }
+
+    @Override
+    public String uploadFile(MultipartFile file, String folder) {
         try {
             // 检查存储桶是否存在
             boolean found = minioClient.bucketExists(BucketExistsArgs.builder().bucket(bucketName).build());
@@ -37,17 +42,26 @@ public class FileServiceImpl implements IFileService {
                 minioClient.makeBucket(MakeBucketArgs.builder().bucket(bucketName).build());
             }
 
-            String fileName = UUID.randomUUID().toString() + "-" + file.getOriginalFilename();
+            String originalName = file.getOriginalFilename();
+            String fileName = UUID.randomUUID().toString() + "-" + originalName;
+            
+            // 如果指定了文件夹，拼接前缀
+            String objectName = fileName;
+            if (folder != null && !folder.trim().isEmpty()) {
+                String cleanFolder = folder.endsWith("/") ? folder : folder + "/";
+                objectName = cleanFolder + fileName;
+            }
+
             minioClient.putObject(
                     PutObjectArgs.builder()
                             .bucket(bucketName)
-                            .object(fileName)
+                            .object(objectName)
                             .stream(file.getInputStream(), file.getSize(), -1)
                             .contentType(file.getContentType())
                             .build()
             );
             // 这里返回完整的访问路径
-            return endpoint + "/" + bucketName + "/" + fileName;
+            return endpoint + "/" + bucketName + "/" + objectName;
         } catch (Exception e) {
             log.error("File upload failed", e);
             throw new BusinessException("文件上传失败: " + e.getMessage());

@@ -21,7 +21,9 @@ public class FileController {
 
     @PostMapping("/upload")
     @Operation(summary = "上传文件到MinIO")
-    public Result<String> upload(@RequestParam("file") MultipartFile file) {
-        return Result.success(fileService.uploadFile(file));
+    public Result<String> upload(
+            @RequestParam("file") MultipartFile file,
+            @RequestParam(value = "folder", required = false) String folder) {
+        return Result.success(fileService.uploadFile(file, folder));
     }
 }

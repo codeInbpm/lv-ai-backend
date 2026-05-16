@@ -74,7 +74,11 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
             // 更新登录信息
             user.setLastLoginTime(LocalDateTime.now());
             if (StrUtil.isNotBlank(dto.getNickname())) user.setNickname(dto.getNickname());
-            if (StrUtil.isNotBlank(dto.getAvatar())) user.setAvatar(dto.getAvatar());
+            if (StrUtil.isNotBlank(dto.getAvatar()) && !dto.getAvatar().equals(user.getAvatar())) {
+                // 删除旧头像文件
+                fileService.deleteFile(user.getAvatar());
+                user.setAvatar(dto.getAvatar());
+            }
             updateById(user);
         }
 
@@ -97,10 +101,22 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         return getById(userId);
     }
 
+    private final com.lvai.service.IFileService fileService;
+
     @Override
     public User updateUserInfo(User user) {
         Long userId = StpUtil.getLoginIdAsLong();
         user.setId(userId);
+        
+        // 如果修改了头像，删除原有的 MinIO 文件，避免存储空间浪费
+        if (StrUtil.isNotBlank(user.getAvatar())) {
+            User oldUser = getById(userId);
+            if (oldUser != null && StrUtil.isNotBlank(oldUser.getAvatar()) 
+                && !user.getAvatar().equals(oldUser.getAvatar())) {
+                fileService.deleteFile(oldUser.getAvatar());
+            }
+        }
+        
         updateById(user);
         return getById(userId);
     }
