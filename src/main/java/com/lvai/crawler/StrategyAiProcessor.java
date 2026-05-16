@@ -15,6 +15,7 @@ import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -22,20 +23,37 @@ import java.util.List;
 @Slf4j
 @Component
 public class StrategyAiProcessor {
-    // 强制注入 Qwen (Dashscope) 或通用模型
-    private final ChatModel chatModel;
+
+    @Value("${ai.provider}")
+    private String aiProvider;
+
+    private final ChatModel openAiChatModel;
+    private final ChatModel dashscopeChatModel;
+    private final ChatModel deepSeekChatModel;
     private final IStrategyPostService postService;
     private final IStrategyTagService tagService;
     private final IStrategyPostTagService postTagService;
 
-    public StrategyAiProcessor(@Qualifier("dashscopeChatModel") ChatModel chatModel,
+    public StrategyAiProcessor(@Qualifier("openAiChatModel") ChatModel openAiChatModel,
+                               @Qualifier("dashscopeChatModel") ChatModel dashscopeChatModel,
+                               @Qualifier("deepSeekChatModel") ChatModel deepSeekChatModel,
                                IStrategyPostService postService,
                                IStrategyTagService tagService,
                                IStrategyPostTagService postTagService) {
-        this.chatModel = chatModel;
+        this.openAiChatModel = openAiChatModel;
+        this.dashscopeChatModel = dashscopeChatModel;
+        this.deepSeekChatModel = deepSeekChatModel;
         this.postService = postService;
         this.tagService = tagService;
         this.postTagService = postTagService;
+    }
+
+    private ChatModel getChatModel() {
+        return switch (aiProvider.toLowerCase()) {
+            case "qwen" -> dashscopeChatModel;
+            case "deepseek" -> deepSeekChatModel;
+            default -> openAiChatModel;
+        };
     }
 
     public void processAsync(StrategyPost post) {
@@ -46,7 +64,7 @@ public class StrategyAiProcessor {
                         "{\"summary\":\"200字核心摘要\", \"tags\":[\"标签1\", \"标签2\"], \"itinerary\":[{\"day\":\"Day1\",\"desc\":\"行程描述\"}]}\n\n" +
                         "原文内容：" + post.getContent();
                 
-                ChatResponse response = chatModel.call(new Prompt(List.of(
+                ChatResponse response = getChatModel().call(new Prompt(List.of(
                         new SystemMessage("你是一个专业的旅游内容分析 AI。"),
                         new UserMessage(promptText)
                 )));

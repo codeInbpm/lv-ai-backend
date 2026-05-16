@@ -1,5 +1,5 @@
 ai:
-  provider: qwen # 可选值根据你的代码逻辑而定，如: openai, dashscope, deepseek
+  provider: deepseek # 可选值根据你的代码逻辑而定，如: openai, dashscope, deepseek
 
 server:
   port: 8080
@@ -55,11 +55,11 @@ spring:
               max-tokens: 4096
               enable-search: false #(禁用) 互联网搜索服务
     deepseek:
-      api-key: sk-e94db327cc7d457d99a8de8810fc6b12
+      api-key: sk-084c21c23a1644139c4cabcac58da3fb
 #      base-url: https://dashscope.aliyuncs.com/compatible-mode/v1
       chat:
         options:
-          model: deepseek-v3.2
+          model: deepseek-v4-pro
           max-tokens: 4096
     moonshot:
       api-key: sk-abc

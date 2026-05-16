@@ -16,6 +16,7 @@ import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -25,16 +26,33 @@ import java.util.List;
 @Service
 public class AiCompanionServiceImpl implements IAiCompanionService {
 
-    private final ChatModel chatModel;
+    @Value("${ai.provider}")
+    private String aiProvider;
+
+    private final ChatModel openAiChatModel;
+    private final ChatModel dashscopeChatModel;
+    private final ChatModel deepSeekChatModel;
     private final IAiChatHistoryService chatHistoryService;
     private final ITravelPlanService travelPlanService;
 
-    public AiCompanionServiceImpl(@Qualifier("dashscopeChatModel") ChatModel chatModel,
+    public AiCompanionServiceImpl(@Qualifier("openAiChatModel") ChatModel openAiChatModel,
+                                  @Qualifier("dashscopeChatModel") ChatModel dashscopeChatModel,
+                                  @Qualifier("deepSeekChatModel") ChatModel deepSeekChatModel,
                                   IAiChatHistoryService chatHistoryService,
                                   ITravelPlanService travelPlanService) {
-        this.chatModel = chatModel;
+        this.openAiChatModel = openAiChatModel;
+        this.dashscopeChatModel = dashscopeChatModel;
+        this.deepSeekChatModel = deepSeekChatModel;
         this.chatHistoryService = chatHistoryService;
         this.travelPlanService = travelPlanService;
+    }
+
+    private ChatModel getChatModel() {
+        return switch (aiProvider.toLowerCase()) {
+            case "qwen" -> dashscopeChatModel;
+            case "deepseek" -> deepSeekChatModel;
+            default -> openAiChatModel;
+        };
     }
 
     @Override
@@ -83,6 +101,7 @@ public class AiCompanionServiceImpl implements IAiCompanionService {
         chatHistoryService.save(userHistory);
 
         // 3. Call AI
+        ChatModel chatModel = getChatModel();
         ChatResponse response = chatModel.call(new Prompt(messages));
         String answer = response.getResult().getOutput().getText();
         Integer tokens = response.getMetadata() != null && response.getMetadata().getUsage() != null ? 

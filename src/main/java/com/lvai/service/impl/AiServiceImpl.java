@@ -117,7 +117,7 @@ public class AiServiceImpl extends ServiceImpl<AiGenerationLogMapper, AiGenerati
     private String getActiveModelName() {
         return switch (aiProvider.toLowerCase()) {
             case "qwen" -> "qwen-max";
-            case "deepseek" -> "deepseek-v3";
+            case "deepseek" -> "deepseek-v4-pro";
             default -> "gpt-4o-mini";
         };
     }
