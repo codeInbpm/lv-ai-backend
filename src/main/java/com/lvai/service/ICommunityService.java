@@ -16,4 +16,9 @@ public interface ICommunityService {
      * 获取用户收藏的攻略/笔记
      */
     List<com.lvai.vo.UserCollectionVO> getCollections(Long userId, Integer type);
+
+    /**
+     * 获取用户全部收藏的混合列表(笔记、攻略、景区等)
+     */
+    List<com.lvai.vo.UserCollectionVO> getAllCollections(Long userId);
 }

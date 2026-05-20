@@ -42,6 +42,13 @@ public class CommunityController {
         return Result.success(communityService.getCollections(userId, type));
     }
 
+    @GetMapping("/collections")
+    @Operation(summary = "获取用户全部收藏列表(混合1:笔记, 3:攻略, 4:景区)")
+    public Result<List<com.lvai.vo.UserCollectionVO>> getAllCollections() {
+        Long userId = StpUtil.getLoginIdAsLong();
+        return Result.success(communityService.getAllCollections(userId));
+    }
+
     @GetMapping("/history")
     @Operation(summary = "获取用户浏览历史")
     public Result<java.util.List<com.lvai.entity.UserBrowsingHistory>> getBrowsingHistory() {

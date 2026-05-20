@@ -19,6 +19,7 @@ public class TravelInspiration implements Serializable {
     private Integer recommendCount;
     private String content;
     private Integer isFeatured;
+    private Long destinationId;  // 对应的目的地ID，用于前端精确跳转
     
     @TableField(fill = FieldFill.INSERT)
     private LocalDateTime createTime;
