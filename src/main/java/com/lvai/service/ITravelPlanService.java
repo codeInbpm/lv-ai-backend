@@ -9,6 +9,7 @@ import com.lvai.vo.PlanDetailVO;
 
 public interface ITravelPlanService extends IService<TravelPlan> {
     PlanDetailVO createPlanWithAI(CreatePlanDTO dto);
+    void doAsyncGeneratePlan(Long planId, CreatePlanDTO dto, Long userId);
     PlanDetailVO getPlanDetail(Long planId);
     IPage<TravelPlan> getUserPlans(Long userId, Integer status, int page, int size);
     IPage<TravelPlan> getPublicPlans(PlanQueryDTO dto);

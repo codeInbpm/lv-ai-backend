@@ -20,6 +20,7 @@ public class Destination implements Serializable {
     private BigDecimal lng;
     private String description;
     private String imageUrl;
+    private String tags;
     private Integer viewCount;
     private Integer likeCount;
     private Integer isHot;

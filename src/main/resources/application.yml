@@ -52,7 +52,7 @@ spring:
           chat:
             options:
               model: qwen-max
-              max-tokens: 4096
+              max-tokens: 8192
               enable-search: false #(禁用) 互联网搜索服务
     deepseek:
       api-key: sk-084c21c23a1644139c4cabcac58da3fb
@@ -60,7 +60,7 @@ spring:
       chat:
         options:
           model: deepseek-v4-pro
-          max-tokens: 4096
+          max-tokens: 8192
     moonshot:
       api-key: sk-abc
     qianfan: # 文心一言

@@ -38,19 +38,20 @@ public class TravelPlanServiceImpl extends ServiceImpl<TravelPlanMapper, TravelP
     private final TravelItemServiceImpl travelItemService;
     private final UserCollectionServiceImpl userCollectionService;
 
+    @org.springframework.context.annotation.Lazy
+    @org.springframework.beans.factory.annotation.Autowired
+    private ITravelPlanService self;
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     public PlanDetailVO createPlanWithAI(CreatePlanDTO dto) {
         Long userId = StpUtil.getLoginIdAsLong();
 
-        // 1. 调用AI生成行程
-        AiPlanResultVO aiResult = aiService.generateTravelPlan(dto, userId);
-
-        // 2. 创建行程主记录
+        // 1. 创建“生成中”的主记录
         TravelPlan plan = new TravelPlan();
         plan.setUserId(userId);
-        plan.setTitle(aiResult.getTitle());
-        plan.setDescription(aiResult.getDescription());
+        plan.setTitle(dto.getDestination() + "行程规划中...");
+        plan.setDescription("AI正在为您生成专属行程，请稍候...");
         plan.setDeparture(dto.getDeparture());
         plan.setDepartureLng(dto.getDepartureLng());
         plan.setDepartureLat(dto.getDepartureLat());
@@ -63,18 +64,43 @@ public class TravelPlanServiceImpl extends ServiceImpl<TravelPlanMapper, TravelP
         plan.setBudget(dto.getBudget());
         plan.setPeopleCount(dto.getPeopleCount());
         plan.setPreferences(JSON.toJSONString(dto.getPreferences()));
-        plan.setAiContent(JSON.toJSONString(aiResult));
-        plan.setAiLogId(aiResult.getAiLogId());
-        plan.setStatus(1);
+        plan.setStatus(0); // 0: 生成中
         plan.setIsPublic(0);
         plan.setViewCount(0);
         plan.setCollectCount(0);
         save(plan);
 
-        // 3. 创建每日行程和明细
-        List<PlanDetailVO.DayWithItems> dayWithItemsList = new ArrayList<>();
+        // 2. 异步执行AI生成
+        self.doAsyncGeneratePlan(plan.getId(), dto, userId);
 
-        if (aiResult.getDays() != null) {
+        PlanDetailVO vo = new PlanDetailVO();
+        vo.setPlan(plan);
+        return vo;
+    }
+
+    @Override
+    @org.springframework.scheduling.annotation.Async("asyncExecutor")
+    public void doAsyncGeneratePlan(Long planId, CreatePlanDTO dto, Long userId) {
+        try {
+            // 调用AI生成行程
+            AiPlanResultVO aiResult = aiService.generateTravelPlan(dto, userId);
+
+            if (aiResult.getDays() == null || aiResult.getDays().isEmpty()) {
+                throw new BusinessException("AI返回的行程天数为空");
+            }
+
+            // 更新主记录
+            TravelPlan plan = getById(planId);
+            if (plan == null) return;
+            plan.setTitle(aiResult.getTitle());
+            plan.setDescription(aiResult.getDescription());
+            plan.setAiContent(JSON.toJSONString(aiResult));
+            plan.setAiLogId(aiResult.getAiLogId());
+            plan.setStatus(1); // 1: 正常/已生成
+
+            List<TravelDay> daysToSave = new ArrayList<>();
+            List<TravelItem> itemsToSave = new ArrayList<>();
+
             for (AiPlanResultVO.DayPlan dayPlan : aiResult.getDays()) {
                 TravelDay day = new TravelDay();
                 day.setPlanId(plan.getId());
@@ -83,9 +109,13 @@ public class TravelPlanServiceImpl extends ServiceImpl<TravelPlanMapper, TravelP
                 day.setTitle(dayPlan.getTitle());
                 day.setDescription(dayPlan.getDescription());
                 day.setFinished(0);
-                travelDayService.save(day);
+                daysToSave.add(day);
+            }
+            travelDayService.saveBatch(daysToSave);
 
-                List<TravelItem> items = new ArrayList<>();
+            for (int i = 0; i < aiResult.getDays().size(); i++) {
+                AiPlanResultVO.DayPlan dayPlan = aiResult.getDays().get(i);
+                TravelDay day = daysToSave.get(i);
                 if (dayPlan.getItems() != null) {
                     for (AiPlanResultVO.ItemPlan itemPlan : dayPlan.getItems()) {
                         TravelItem item = new TravelItem();
@@ -108,22 +138,18 @@ public class TravelPlanServiceImpl extends ServiceImpl<TravelPlanMapper, TravelP
                         item.setDescription(itemPlan.getDescription());
                         item.setTips(itemPlan.getTips());
                         item.setCheckedIn(0);
-                        travelItemService.save(item);
-                        items.add(item);
+                        itemsToSave.add(item);
                     }
                 }
-
-                PlanDetailVO.DayWithItems dwi = new PlanDetailVO.DayWithItems();
-                dwi.setDay(day);
-                dwi.setItems(items);
-                dayWithItemsList.add(dwi);
             }
-        }
+            travelItemService.saveBatch(itemsToSave);
+            updateById(plan);
 
-        PlanDetailVO vo = new PlanDetailVO();
-        vo.setPlan(plan);
-        vo.setDays(dayWithItemsList);
-        return vo;
+        } catch (Exception e) {
+            log.error("AI 异步生成失败, planId={}", planId, e);
+            // 生成失败，直接物理删除空记录，不留残余
+            removeById(planId);
+        }
     }
 
     @Override

@@ -160,7 +160,7 @@ public class AiServiceImpl extends ServiceImpl<AiGenerationLogMapper, AiGenerati
             result.setAiLogId(logId);
             return result;
         } catch (Exception e) {
-            log.warn("解析AI输出JSON失败，尝试手动构建: {}", e.getMessage());
+            log.warn("解析AI输出JSON失败，尝试手动构建: {} \n原始输出: {}", e.getMessage(), aiOutput);
             AiPlanResultVO result = new AiPlanResultVO();
             result.setTitle("AI生成行程");
             result.setDescription(aiOutput.substring(0, Math.min(500, aiOutput.length())));
