@@ -17,6 +17,8 @@ import java.util.List;
 public class PlanCheckinController {
 
     private final IPlanCheckinRecordService checkinRecordService;
+    private final com.lvai.service.ITravelItemService travelItemService;
+    private final com.lvai.service.ITravelExpenseService travelExpenseService;
 
     @PostMapping("/checkin")
     public Result<String> submitCheckin(@RequestBody CheckInDTO dto) {
@@ -32,6 +34,40 @@ public class PlanCheckinController {
             record.setImages(JSON.toJSONString(dto.getImages()));
         }
         checkinRecordService.save(record);
+
+        // 更新 TravelItem 状态
+        com.lvai.entity.TravelItem item = travelItemService.getById(dto.getItemId());
+        if (item != null) {
+            item.setCheckedIn(1);
+            item.setCheckInTime(java.time.LocalDateTime.now());
+            if (dto.getCost() != null && dto.getCost().compareTo(java.math.BigDecimal.ZERO) > 0) {
+                item.setActualCost(dto.getCost());
+            }
+            travelItemService.updateById(item);
+
+            // 记录一笔账单
+            if (dto.getCost() != null && dto.getCost().compareTo(java.math.BigDecimal.ZERO) > 0) {
+                com.lvai.entity.TravelExpense expense = new com.lvai.entity.TravelExpense();
+                expense.setUserId(userId);
+                expense.setPlanId(dto.getPlanId());
+                expense.setDayId(dto.getDayId());
+                expense.setAmount(dto.getCost());
+                
+                int itemType = item.getType() != null ? item.getType() : 6;
+                int expenseType = 6;
+                if (itemType == 1) expenseType = 4; // 景点 -> 门票
+                else if (itemType == 2) expenseType = 1; // 美食 -> 餐饮
+                else if (itemType == 3) expenseType = 2; // 酒店 -> 住宿
+                else if (itemType == 4) expenseType = 3; // 交通 -> 交通
+                else if (itemType == 5) expenseType = 5; // 购物 -> 购物
+                
+                expense.setType(expenseType);
+                expense.setRemark(item.getName());
+                expense.setExpenseDate(java.time.LocalDate.now());
+                travelExpenseService.save(expense);
+            }
+        }
+
         return Result.success("打卡成功");
     }
 
