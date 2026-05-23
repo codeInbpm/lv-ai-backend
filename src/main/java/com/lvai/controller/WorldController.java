@@ -27,6 +27,18 @@ public class WorldController {
         return Result.success(worldService.getInspirations(month));
     }
 
+    @GetMapping("/hot-selfdrive")
+    @Operation(summary = "获取热门自驾自由行列表")
+    public Result<List<TravelInspiration>> getHotSelfdrive() {
+        return Result.success(worldService.getHotSelfdriveInspirations());
+    }
+
+    @GetMapping("/inspiration/{id}")
+    @Operation(summary = "获取灵感详情")
+    public Result<com.lvai.vo.InspirationVO> getInspirationDetail(@PathVariable Long id) {
+        return Result.success(worldService.getInspirationDetail(id));
+    }
+
     @GetMapping("/broadcast")
     @Operation(summary = "获取系统广播")
     public Result<List<SystemBroadcast>> getBroadcasts() {

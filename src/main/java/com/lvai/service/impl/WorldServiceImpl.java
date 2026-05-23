@@ -28,8 +28,33 @@ public class WorldServiceImpl implements IWorldService {
         return inspirationMapper.selectList(
             new LambdaQueryWrapper<TravelInspiration>()
                 .eq(TravelInspiration::getMonth, month)
-                .orderByDesc(TravelInspiration::getIsFeatured)
+                .orderByDesc(TravelInspiration::getLikeCount, TravelInspiration::getViewCount, TravelInspiration::getIsFeatured)
         );
+    }
+
+    @Override
+    public List<TravelInspiration> getHotSelfdriveInspirations() {
+        return inspirationMapper.selectList(
+            new LambdaQueryWrapper<TravelInspiration>()
+                .eq(TravelInspiration::getIsHot, 1)
+                .orderByDesc(TravelInspiration::getLikeCount, TravelInspiration::getViewCount)
+        );
+    }
+
+    @Override
+    public com.lvai.vo.InspirationVO getInspirationDetail(Long id) {
+        TravelInspiration inspiration = inspirationMapper.selectById(id);
+        if (inspiration == null) return null;
+        
+        com.lvai.vo.InspirationVO vo = new com.lvai.vo.InspirationVO();
+        BeanUtils.copyProperties(inspiration, vo);
+        
+        if (inspiration.getDestinationId() != null) {
+            Destination destination = destinationMapper.selectById(inspiration.getDestinationId());
+            vo.setDestination(destination);
+        }
+        
+        return vo;
     }
 
     @Override

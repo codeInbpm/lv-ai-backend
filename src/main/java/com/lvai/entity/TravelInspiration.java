@@ -20,6 +20,9 @@ public class TravelInspiration implements Serializable {
     private String content;
     private Integer isFeatured;
     private Long destinationId;  // 对应的目的地ID，用于前端精确跳转
+    private Integer viewCount;     // 浏览量
+    private Integer likeCount;     // 点赞/推荐数
+    private Integer isHot;         // 是否热门推荐
     
     @TableField(fill = FieldFill.INSERT)
     private LocalDateTime createTime;
