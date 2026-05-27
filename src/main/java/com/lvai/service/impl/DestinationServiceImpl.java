@@ -28,7 +28,7 @@ public class DestinationServiceImpl extends ServiceImpl<DestinationMapper, Desti
     public Page<Destination> getHotDestinations(int page, int size) {
         Page<Destination> pageParam = new Page<>(page, size);
         return page(pageParam, new LambdaQueryWrapper<Destination>()
-                .eq(Destination::getIsHot, 1)
+                .orderByDesc(Destination::getHotScore)
                 .orderByDesc(Destination::getSortOrder)
                 .orderByDesc(Destination::getViewCount));
     }

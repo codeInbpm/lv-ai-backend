@@ -14,6 +14,8 @@ import com.lvai.mapper.UserCollectionMapper;
 import com.lvai.service.IUserNoteService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.context.ApplicationEventPublisher;
+import com.lvai.event.UserBehaviorEvent;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -29,6 +31,7 @@ public class UserNoteServiceImpl extends ServiceImpl<UserNoteMapper, UserNote> i
     private final com.lvai.mapper.NoteCommentMapper noteCommentMapper;
     private final com.lvai.mapper.NoteCommentLikeMapper noteCommentLikeMapper;
     private final com.lvai.service.IFileService fileService;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     public UserNote publishNote(Long userId, UserNote note) {
@@ -38,6 +41,12 @@ public class UserNoteServiceImpl extends ServiceImpl<UserNoteMapper, UserNote> i
         note.setLikeCount(0);
         note.setCommentCount(0);
         this.save(note);
+        
+        // 发布事件
+        if (note.getLocationName() != null && !note.getLocationName().trim().isEmpty()) {
+            eventPublisher.publishEvent(new UserBehaviorEvent(this, note.getLocationName(), "NOTE"));
+        }
+        
         return note;
     }
 

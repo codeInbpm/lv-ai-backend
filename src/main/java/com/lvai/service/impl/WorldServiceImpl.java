@@ -70,8 +70,9 @@ public class WorldServiceImpl implements IWorldService {
     public List<Destination> getHotDestinations() {
         return destinationMapper.selectList(
             new LambdaQueryWrapper<Destination>()
-                .eq(Destination::getIsHot, 1)
+                .orderByDesc(Destination::getHotScore)
                 .orderByDesc(Destination::getSortOrder)
+                .last("limit 8")
         );
     }
 

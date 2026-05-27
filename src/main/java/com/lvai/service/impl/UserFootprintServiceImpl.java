@@ -10,6 +10,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.context.ApplicationEventPublisher;
+import com.lvai.event.UserBehaviorEvent;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -20,6 +22,8 @@ import java.util.stream.Collectors;
 public class UserFootprintServiceImpl extends ServiceImpl<UserFootprintMapper, UserFootprint>
         implements IUserFootprintService {
 
+    private final ApplicationEventPublisher eventPublisher;
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     public UserFootprint addFootprint(UserFootprint footprint) {
@@ -27,6 +31,13 @@ public class UserFootprintServiceImpl extends ServiceImpl<UserFootprintMapper, U
             footprint.setCountry("中国");
         }
         save(footprint);
+        
+        // 发布事件
+        String locationName = StrUtil.isNotBlank(footprint.getCity()) ? footprint.getCity() : footprint.getLocationName();
+        if (StrUtil.isNotBlank(locationName)) {
+            eventPublisher.publishEvent(new UserBehaviorEvent(this, locationName, "FOOTPRINT"));
+        }
+        
         return footprint;
     }
 

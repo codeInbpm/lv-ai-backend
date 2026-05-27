@@ -5,6 +5,7 @@ import com.lvai.entity.TravelInspiration;
 import com.lvai.entity.SystemBroadcast;
 import com.lvai.entity.Destination;
 import com.lvai.entity.Topic;
+import com.lvai.service.IHotDestinationService;
 import com.lvai.service.IWorldService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -20,6 +21,7 @@ import java.util.List;
 public class WorldController {
 
     private final IWorldService worldService;
+    private final IHotDestinationService hotDestinationService;
 
     @GetMapping("/inspirations")
     @Operation(summary = "获取出行灵感")
@@ -47,8 +49,9 @@ public class WorldController {
 
     @GetMapping("/destinations/hot")
     @Operation(summary = "获取热门目的地")
-    public Result<List<Destination>> getHotDestinations() {
-        return Result.success(worldService.getHotDestinations());
+    public Result<List<Destination>> getHotDestinations(
+            @RequestParam(defaultValue = "8") Integer limit) {
+        return Result.success(hotDestinationService.getHotDestinations(limit));
     }
     
     @GetMapping("/destination/{id}")
