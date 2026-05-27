@@ -12,9 +12,9 @@ spring:
   datasource:
     type: com.alibaba.druid.pool.DruidDataSource
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://139.224.27.132:3306/lv_ai?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=false&serverTimezone=GMT%2B8&allowPublicKeyRetrieval=true
+    url: jdbc:mysql://localhost:3306/lv_ai?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=false&serverTimezone=GMT%2B8&allowPublicKeyRetrieval=true
     username: root
-    password: endless@028btc
+    password: 123456
     druid:
       initial-size: 5
       min-idle: 5
@@ -28,9 +28,9 @@ spring:
       test-on-return: false
   data:
     redis:
-      host: 139.224.27.132
+      host: localhost
       port: 6379
-      password: endless@028btc
+      password: 123456
       database: 1
       timeout: 10000ms
       lettuce:
@@ -64,19 +64,19 @@ spring:
     moonshot:
       api-key: sk-abc
     qianfan: # 文心一言
-      api-key: x0cuLZ7XsaTCU08vuJWO87Lg
-      secret-key: R9mYF9dl9KASgi5RUq0FQt3wRisSnOcK
+      api-key:  #your api_key
+      secret-key: # your secret_key
     anthropic: # Anthropic Claude
-      api-key: sk-muubv7cXeLw0Etgs743f365cD5Ea44429946Fa7e672d8942
+      api-key:  # your secret_key
     azure: # OpenAI 微软
       openai:
         endpoint: https://eastusprejade.openai.azure.com
     minimax:
       api-key: xxxx
     stabilityai:
-      api-key: sk-e53UqbboF8QJCscYvzJscJxJXoFcFg4iJjl1oqgE7baJETmx
+      api-key:  # your secret_key
     zhipuai: # 智谱 AI
-      api-key: 32f84543e54eee31f8d56b2bd6020573.3vh9idLJZ2ZhxDEs
+      api-key:  # your secret_key
 
 
 mybatis-plus:
@@ -118,26 +118,26 @@ knife4j:
 # 微信小程序配置
 wechat:
   mini:
-    app-id: wx211854ff12b5023a
-    app-secret: 9a0f6b438fedff527a51bb871c192d16
+    app-id: # your app_id
+    app-secret: # your app_secret
     grant-type: authorization_code
     login-url: https://api.weixin.qq.com/sns/jscode2session
     # 订阅消息模板 ID（公共模板「留言提醒」, 字段: thing1 用户名称 / thing2 备注消息 / time3 留言日期）
-    template-id: bcMzwddS-N1kX6edujEwu1pDmt0rXPYCXhCzD7HdAhk
+    template-id: # your template_id
     # formal/trial/developer (正式版/体验版/开发版)
     miniprogram-state: formal
 
 # 腾讯地图配置
 tencent:
   map:
-    key: 66ABZ-QFMRI-BQWGG-UTPBO-NEZA3-SLFGI
+    key: # your tencent_key
     base-url: https://apis.map.qq.com
 
 
 minio:
-  endpoint: http://139.224.27.132:9000
-  accessKey: admin
-  secretKey: endless@028btc
+  endpoint: http://localhost:9000
+  accessKey: # your access_key
+  secretKey: # your_secret_key
   bucketName: lvtu-ai
 
 
