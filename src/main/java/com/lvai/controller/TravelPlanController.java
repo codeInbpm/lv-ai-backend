@@ -101,6 +101,16 @@ public class TravelPlanController {
         return Result.success(item);
     }
 
+    @GetMapping("/item/{itemId}")
+    @Operation(summary = "获取行程明细项详情")
+    public Result<TravelItem> getPlanItemDetail(@PathVariable Long itemId) {
+        TravelItem item = travelItemService.getById(itemId);
+        if (item == null) {
+            return Result.error("行程明细不存在");
+        }
+        return Result.success(item);
+    }
+
     @PutMapping("/item/{itemId}")
     @Operation(summary = "修改行程明细项")
     public Result<TravelItem> updatePlanItem(@PathVariable Long itemId, @RequestBody TravelItem item) {

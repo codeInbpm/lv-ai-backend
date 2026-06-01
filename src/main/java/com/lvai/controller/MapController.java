@@ -3,6 +3,7 @@ package com.lvai.controller;
 import com.lvai.common.Result;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -17,6 +18,15 @@ import java.util.Map;
 @RestController
 @RequestMapping("/map")
 public class MapController {
+
+    @Value("${tencent.map.key}")
+    private String mapKey;
+
+    @GetMapping("/key")
+    @Operation(summary = "获取腾讯地图开发者Key(安全抽取)")
+    public Result<String> getMapKey() {
+        return Result.success(mapKey);
+    }
 
     @GetMapping("/nearby")
     @Operation(summary = "查询地图附近兴趣点(POI)")

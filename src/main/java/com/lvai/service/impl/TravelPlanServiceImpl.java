@@ -47,6 +47,16 @@ public class TravelPlanServiceImpl extends ServiceImpl<TravelPlanMapper, TravelP
     public PlanDetailVO createPlanWithAI(CreatePlanDTO dto) {
         Long userId = StpUtil.getLoginIdAsLong();
 
+        // 【大坝级并发阻断锁】检查该用户当前是否已经存在正在生成中(status=0)的行程记录，防止高并发下用户重复点击或网络重试导致疯狂调AI与爆库
+        long generatingCount = count(
+                new LambdaQueryWrapper<TravelPlan>()
+                        .eq(TravelPlan::getUserId, userId)
+                        .eq(TravelPlan::getStatus, 0)
+        );
+        if (generatingCount > 0) {
+            throw new BusinessException("AI旅伴正在为您规划上一个行程中，请稍候再试，避免重复规划哦。");
+        }
+
         // 1. 创建“生成中”的主记录
         TravelPlan plan = new TravelPlan();
         plan.setUserId(userId);
@@ -147,8 +157,27 @@ public class TravelPlanServiceImpl extends ServiceImpl<TravelPlanMapper, TravelP
 
         } catch (Exception e) {
             log.error("AI 异步生成失败, planId={}", planId, e);
-            // 生成失败，直接物理删除空记录，不留残余
-            removeById(planId);
+            // 生成失败不再物理删除，而是状态机扭转为 status = 4 并记录高情商报错原因，拒绝粗暴闪退白屏
+            TravelPlan plan = getById(planId);
+            if (plan != null) {
+                plan.setStatus(4); // 4: 生成失败
+                String failReason = e.getMessage();
+                if (failReason == null) {
+                    failReason = e.getClass().getSimpleName();
+                }
+                
+                // 根据异常关键字进行极其体贴、高情商的报错文本转换
+                if (failReason.contains("Arrearage") || failReason.contains("out of credit") || failReason.contains("credit") || failReason.contains("欠费")) {
+                    plan.setDescription("生成失败！您的 AI 旅伴因为额度耗尽正处于闭关中，暂不能出游，请联系管理员充值哦。");
+                } else if (failReason.contains("timeout") || failReason.contains("Timeout") || failReason.contains("超时")) {
+                    plan.setDescription("生成失败！网络有些拥堵，大模型规划路线规划累坏啦，请您稍候再试。");
+                } else if (failReason.contains("ApiKey") || failReason.contains("API key")) {
+                    plan.setDescription("生成失败！AI 密钥配置似乎开小差了，请联系管理员检查配置。");
+                } else {
+                    plan.setDescription("生成失败！规划行程时 AI 旅伴有些心不在焉（原因：" + failReason + "），建议您重新生成试试。");
+                }
+                updateById(plan);
+            }
         }
     }
 
@@ -157,8 +186,11 @@ public class TravelPlanServiceImpl extends ServiceImpl<TravelPlanMapper, TravelP
         TravelPlan plan = getById(planId);
         if (plan == null) throw new BusinessException("行程不存在");
 
-        plan.setViewCount(plan.getViewCount() + 1);
-        updateById(plan);
+        // 仅在行程已生成成功(status=1)时更新浏览量，避免生成中(status=0)或生成失败(status=4)轮询时造成高频写库压力
+        if (plan.getStatus() != null && plan.getStatus() == 1) {
+            plan.setViewCount(plan.getViewCount() + 1);
+            updateById(plan);
+        }
 
         List<TravelDay> days = travelDayService.list(
                 new LambdaQueryWrapper<TravelDay>()

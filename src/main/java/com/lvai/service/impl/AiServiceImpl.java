@@ -45,7 +45,6 @@ public class AiServiceImpl extends ServiceImpl<AiGenerationLogMapper, AiGenerati
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public AiPlanResultVO generateTravelPlan(CreatePlanDTO dto, Long userId) {
         String systemPrompt = loadSystemPrompt();
         String userInput = buildUserInput(dto);

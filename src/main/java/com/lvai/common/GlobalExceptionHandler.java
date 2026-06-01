@@ -52,6 +52,15 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public Result<Void> handleException(Exception e) {
         log.error("系统异常", e);
+        String msg = e.getMessage();
+        if (msg != null) {
+            if (msg.contains("Arrearage") || msg.contains("out of credit") || msg.contains("credit") || msg.contains("欠费")) {
+                return Result.error("您的 AI 旅伴因为额度耗尽正处于闭关中，暂不能提供服务，请联系管理员充值哦。");
+            }
+            if (msg.contains("timeout") || msg.contains("Timeout") || msg.contains("超时")) {
+                return Result.error("网络太拥堵啦，大模型规划路线规划有些累了，请您稍候再试。");
+            }
+        }
         return Result.error("系统繁忙，请稍后重试");
     }
 }
