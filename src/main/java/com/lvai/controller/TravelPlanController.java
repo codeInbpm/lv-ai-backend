@@ -22,6 +22,11 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+import com.lvai.service.IUserCollectionService;
+import com.lvai.entity.UserCollection;
+import java.util.HashMap;
+import java.util.Map;
+
 @Tag(name = "行程管理模块")
 @RestController
 @RequestMapping("/plan")
@@ -31,6 +36,7 @@ public class TravelPlanController {
     private final ITravelPlanService planService;
     private final ITravelItemService travelItemService;
     private final ITravelDayService travelDayService;
+    private final IUserCollectionService userCollectionService;
 
     @PostMapping("/create")
     @Operation(summary = "AI生成行程(核心接口)")
@@ -79,6 +85,30 @@ public class TravelPlanController {
     @Operation(summary = "收藏/取消收藏行程")
     public Result<Boolean> toggleCollect(@PathVariable Long planId) {
         return Result.success(planService.toggleCollection(planId));
+    }
+
+    @PostMapping("/{planId}/clone")
+    @Operation(summary = "同款路线（克隆行程）")
+    public Result<Long> clonePlan(@PathVariable Long planId) {
+        return Result.success(planService.clonePlan(planId));
+    }
+
+    @GetMapping("/{planId}/status")
+    @Operation(summary = "获取当前用户的行程交互状态(是否收藏)")
+    public Result<Map<String, Boolean>> getInteractionStatus(@PathVariable Long planId) {
+        Map<String, Boolean> status = new HashMap<>();
+        status.put("hasCollected", false);
+        
+        if (StpUtil.isLogin()) {
+            long userId = StpUtil.getLoginIdAsLong();
+            LambdaQueryWrapper<UserCollection> collectQuery = new LambdaQueryWrapper<>();
+            collectQuery.eq(UserCollection::getTargetId, planId)
+                        .eq(UserCollection::getTargetType, 2) // 2: 行程
+                        .eq(UserCollection::getUserId, userId);
+            status.put("hasCollected", userCollectionService.count(collectQuery) > 0);
+        }
+        
+        return Result.success(status);
     }
 
     @PostMapping("/item")

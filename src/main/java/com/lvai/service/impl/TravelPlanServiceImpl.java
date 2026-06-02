@@ -263,7 +263,7 @@ public class TravelPlanServiceImpl extends ServiceImpl<TravelPlanMapper, TravelP
         UserCollection collection = userCollectionService.getOne(
                 new LambdaQueryWrapper<UserCollection>()
                         .eq(UserCollection::getUserId, userId)
-                        .eq(UserCollection::getTargetType, 1)
+                        .eq(UserCollection::getTargetType, 2) // 2: 行程路线
                         .eq(UserCollection::getTargetId, planId)
         );
         if (collection != null) {
@@ -277,7 +277,7 @@ public class TravelPlanServiceImpl extends ServiceImpl<TravelPlanMapper, TravelP
         } else {
             UserCollection newCollection = new UserCollection();
             newCollection.setUserId(userId);
-            newCollection.setTargetType(1);
+            newCollection.setTargetType(2); // 2: 行程路线
             newCollection.setTargetId(planId);
             userCollectionService.save(newCollection);
             TravelPlan plan = getById(planId);
@@ -287,5 +287,88 @@ public class TravelPlanServiceImpl extends ServiceImpl<TravelPlanMapper, TravelP
             }
             return true;
         }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Long clonePlan(Long planId) {
+        Long currentUserId = StpUtil.getLoginIdAsLong();
+        TravelPlan originalPlan = getById(planId);
+        if (originalPlan == null) {
+            throw new BusinessException("原行程不存在");
+        }
+
+        TravelPlan clonedPlan = new TravelPlan();
+        clonedPlan.setUserId(currentUserId);
+        clonedPlan.setTitle(originalPlan.getTitle() + " (同款)");
+        clonedPlan.setCoverImage(originalPlan.getCoverImage());
+        clonedPlan.setDeparture(originalPlan.getDeparture());
+        clonedPlan.setDepartureLng(originalPlan.getDepartureLng());
+        clonedPlan.setDepartureLat(originalPlan.getDepartureLat());
+        clonedPlan.setDestination(originalPlan.getDestination());
+        clonedPlan.setDestinationLng(originalPlan.getDestinationLng());
+        clonedPlan.setDestinationLat(originalPlan.getDestinationLat());
+        clonedPlan.setStartDate(originalPlan.getStartDate());
+        clonedPlan.setEndDate(originalPlan.getEndDate());
+        clonedPlan.setDays(originalPlan.getDays());
+        clonedPlan.setBudget(originalPlan.getBudget());
+        clonedPlan.setPeopleCount(originalPlan.getPeopleCount());
+        clonedPlan.setPreferences(originalPlan.getPreferences());
+        clonedPlan.setDescription(originalPlan.getDescription());
+        clonedPlan.setAiContent(originalPlan.getAiContent());
+        clonedPlan.setStatus(1); // 正常状态
+        clonedPlan.setIsPublic(0); // 默认私密
+        clonedPlan.setViewCount(0);
+        clonedPlan.setCollectCount(0);
+        save(clonedPlan);
+
+        List<TravelDay> days = travelDayService.list(
+                new LambdaQueryWrapper<TravelDay>()
+                        .eq(TravelDay::getPlanId, planId)
+                        .orderByAsc(TravelDay::getDayIndex)
+        );
+
+        for (TravelDay originalDay : days) {
+            TravelDay clonedDay = new TravelDay();
+            clonedDay.setPlanId(clonedPlan.getId());
+            clonedDay.setDayIndex(originalDay.getDayIndex());
+            clonedDay.setDate(originalDay.getDate());
+            clonedDay.setTitle(originalDay.getTitle());
+            clonedDay.setDescription(originalDay.getDescription());
+            clonedDay.setFinished(0);
+            travelDayService.save(clonedDay);
+
+            List<TravelItem> items = travelItemService.list(
+                    new LambdaQueryWrapper<TravelItem>()
+                            .eq(TravelItem::getDayId, originalDay.getId())
+                            .orderByAsc(TravelItem::getSortOrder)
+            );
+
+            List<TravelItem> clonedItems = new ArrayList<>();
+            for (TravelItem originalItem : items) {
+                TravelItem clonedItem = new TravelItem();
+                clonedItem.setPlanId(clonedPlan.getId());
+                clonedItem.setDayId(clonedDay.getId());
+                clonedItem.setSortOrder(originalItem.getSortOrder());
+                clonedItem.setType(originalItem.getType());
+                clonedItem.setName(originalItem.getName());
+                clonedItem.setAddress(originalItem.getAddress());
+                clonedItem.setLng(originalItem.getLng());
+                clonedItem.setLat(originalItem.getLat());
+                clonedItem.setStartTime(originalItem.getStartTime());
+                clonedItem.setEndTime(originalItem.getEndTime());
+                clonedItem.setDuration(originalItem.getDuration());
+                clonedItem.setEstimatedCost(originalItem.getEstimatedCost());
+                clonedItem.setDescription(originalItem.getDescription());
+                clonedItem.setTips(originalItem.getTips());
+                clonedItem.setCheckedIn(0);
+                clonedItems.add(clonedItem);
+            }
+            if (!clonedItems.isEmpty()) {
+                travelItemService.saveBatch(clonedItems);
+            }
+        }
+
+        return clonedPlan.getId();
     }
 }
