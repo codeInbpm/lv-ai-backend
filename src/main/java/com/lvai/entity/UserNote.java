@@ -4,6 +4,8 @@ import com.baomidou.mybatisplus.annotation.*;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import java.io.Serializable;
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Data
@@ -13,6 +15,27 @@ public class UserNote implements Serializable {
 
     @TableId(type = IdType.AUTO)
     private Long id;
+
+    @Schema(description = "内容类型：note=笔记, guide=攻略, travel=游记")
+    private String type;
+
+    @Schema(description = "攻略天数")
+    private Integer days;
+
+    @Schema(description = "人均花费（元）")
+    private BigDecimal cost;
+
+    @Schema(description = "适合季节")
+    private String season;
+
+    @Schema(description = "出行日期")
+    private LocalDate tripDate;
+
+    @Schema(description = "同行伙伴")
+    private String companions;
+
+    @Schema(description = "其他扩展数据")
+    private String extraData;
 
     @Schema(description = "用户ID")
     private Long userId;

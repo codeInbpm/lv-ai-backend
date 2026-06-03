@@ -54,4 +54,10 @@ public class CreatePlanDTO {
 
     @Schema(description = "其他补充说明")
     private String extraNote;
+
+    @Schema(description = "自驾路线偏好")
+    private String drivingPolicy;
+
+    @Schema(description = "自驾车牌号")
+    private String plateNumber;
 }
