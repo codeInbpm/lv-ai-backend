@@ -1,29 +1,33 @@
 package com.lvai.controller;
 
+import cn.dev33.satoken.annotation.SaCheckLogin;
 import cn.dev33.satoken.stp.StpUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.lvai.common.Result;
 import com.lvai.entity.StrategyPost;
 import com.lvai.entity.UserNote;
 import com.lvai.service.IUserNoteService;
+import com.lvai.vo.UserNotePublishVO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 @Tag(name = "我的笔记模块")
 @RestController
 @RequestMapping("/note")
 @RequiredArgsConstructor
+@SaCheckLogin
 public class UserNoteController {
 
     private final IUserNoteService userNoteService;
 
     @PostMapping("/publish")
-    @Operation(summary = "发布笔记")
-    public Result<UserNote> publishNote(@RequestBody UserNote note) {
+    @Operation(summary = "发布或暂存笔记/攻略/游记")
+    public Result<Long> publishNote(@Validated @RequestBody UserNotePublishVO publishVO) {
         long userId = StpUtil.getLoginIdAsLong();
-        return Result.success(userNoteService.publishNote(userId, note));
+        return Result.success(userNoteService.publishNote(userId, publishVO));
     }
 
     @GetMapping("/list")
