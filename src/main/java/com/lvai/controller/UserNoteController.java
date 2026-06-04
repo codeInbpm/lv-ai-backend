@@ -33,10 +33,11 @@ public class UserNoteController {
     @GetMapping("/list")
     @Operation(summary = "获取我的笔记列表")
     public Result<Page<UserNote>> getMyNotes(
+            @RequestParam(required = false) String type,
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size) {
         long userId = StpUtil.getLoginIdAsLong();
-        return Result.success(userNoteService.getMyNotes(userId, page, size));
+        return Result.success(userNoteService.getMyNotes(userId, type, page, size));
     }
 
     @GetMapping("/liked")

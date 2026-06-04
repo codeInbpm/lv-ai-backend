@@ -208,10 +208,14 @@ public class UserNoteServiceImpl extends ServiceImpl<UserNoteMapper, UserNote> i
     }
 
     @Override
-    public Page<UserNote> getMyNotes(Long userId, int page, int size) {
+    public Page<UserNote> getMyNotes(Long userId, String type, int page, int size) {
         Page<UserNote> pageParam = new Page<>(page, size);
         LambdaQueryWrapper<UserNote> query = new LambdaQueryWrapper<>();
-        query.eq(UserNote::getUserId, userId).orderByDesc(UserNote::getCreateTime);
+        query.eq(UserNote::getUserId, userId);
+        if (type != null && !type.trim().isEmpty()) {
+            query.eq(UserNote::getType, type);
+        }
+        query.orderByDesc(UserNote::getCreateTime);
         return this.page(pageParam, query);
     }
 

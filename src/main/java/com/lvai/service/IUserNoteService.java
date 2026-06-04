@@ -9,7 +9,7 @@ import com.lvai.vo.UserNotePublishVO;
 
 public interface IUserNoteService extends IService<UserNote> {
     Long publishNote(Long userId, UserNotePublishVO publishVO);
-    Page<UserNote> getMyNotes(Long userId, int page, int size);
+    Page<UserNote> getMyNotes(Long userId, String type, int page, int size);
     Page<StrategyPost> getMyLiked(Long userId, int page, int size);
     Page<StrategyPost> getMyCollected(Long userId, int page, int size);
     void deleteNoteWithFiles(Long noteId);
