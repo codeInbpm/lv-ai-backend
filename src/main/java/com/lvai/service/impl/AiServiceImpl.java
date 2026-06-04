@@ -116,6 +116,61 @@ public class AiServiceImpl extends ServiceImpl<AiGenerationLogMapper, AiGenerati
         }
     }
 
+    @Override
+    public String generateContent(String systemPrompt, String userInput, Long userId) {
+        String modelName = getActiveModelName();
+
+        AiGenerationLog logEntity = new AiGenerationLog();
+        logEntity.setUserId(userId);
+        logEntity.setSystemPrompt(systemPrompt);
+        logEntity.setUserInput(userInput);
+        logEntity.setProvider(aiProvider);
+        logEntity.setModel(modelName);
+        logEntity.setStatus(0);
+        save(logEntity);
+
+        long startMs = System.currentTimeMillis();
+        try {
+            ChatModel chatModel = getChatModel();
+            Prompt prompt = new Prompt(List.of(new SystemMessage(systemPrompt), new UserMessage(userInput)));
+
+            log.info("AI 开始生成内容: [{}], User: {}", modelName, userId);
+            ChatResponse chatResponse = chatModel.call(prompt);
+
+            String content = "";
+            String reasoning = "";
+            if (chatResponse != null && chatResponse.getResult() != null) {
+                AssistantMessage assistantMessage = chatResponse.getResult().getOutput();
+                content = assistantMessage.getText();
+                if (assistantMessage.getMetadata() != null) {
+                    reasoning = (String) assistantMessage.getMetadata().getOrDefault("reasoning_content", "");
+                }
+            }
+
+            long costMs = System.currentTimeMillis() - startMs;
+            logEntity.setAiOutput(content);
+            logEntity.setReasoningContent(reasoning);
+            logEntity.setStatus(1);
+            logEntity.setCostMs(costMs);
+
+            if (chatResponse != null && chatResponse.getMetadata() != null && chatResponse.getMetadata().getUsage() != null) {
+                logEntity.setInputTokens(Math.toIntExact(chatResponse.getMetadata().getUsage().getPromptTokens()));
+                logEntity.setOutputTokens(Math.toIntExact(chatResponse.getMetadata().getUsage().getTotalTokens()));
+            }
+            updateById(logEntity);
+
+            return content;
+
+        } catch (Exception e) {
+            log.error("AI 内容生成失败", e);
+            logEntity.setStatus(2);
+            logEntity.setErrorMsg(e.getMessage());
+            logEntity.setCostMs(System.currentTimeMillis() - startMs);
+            updateById(logEntity);
+            throw new BusinessException("AI 生成失败: " + e.getMessage());
+        }
+    }
+
     private ChatModel getChatModel() {
         ChatModel model = switch (aiProvider.toLowerCase()) {
             case "qwen" -> dashscopeChatModel;

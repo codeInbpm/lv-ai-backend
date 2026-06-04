@@ -153,7 +153,7 @@ xxl:
       addresses: http://127.0.0.1:8080/xxl-job-admin
     executor:
       appname: lv-ai-executor
-      ip: 
+      ip:
       port: 9999
       logpath: /data/applogs/xxl-job/jobhandler
       logretentiondays: 30

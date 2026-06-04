@@ -17,6 +17,9 @@ public class ContentDraft implements Serializable {
     private Integer draftType;
     private String title;
     private String content; // JSON string
+    private Long planId;
+    private String summary;
+    private String aiMetadata; // JSON string
     private LocalDateTime createTime;
     private LocalDateTime updateTime;
 }

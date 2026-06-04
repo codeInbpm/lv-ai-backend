@@ -5,4 +5,5 @@ import com.lvai.vo.AiPlanResultVO;
 
 public interface IAiService {
     AiPlanResultVO generateTravelPlan(CreatePlanDTO dto, Long userId);
+    String generateContent(String systemPrompt, String userInput, Long userId);
 }

@@ -45,6 +45,18 @@ public class CheckInDTO {
     @Schema(description = "图片URLs")
     private List<String> images;
 
+    @Data
+    @Schema(description = "消费明细记录")
+    public static class ExpenseItem {
+        @Schema(description = "金额")
+        private BigDecimal amount;
+        @Schema(description = "费用类型: 1餐饮 2住宿 3交通 4门票 5购物 6其他")
+        private Integer costType;
+    }
+
+    @Schema(description = "多笔消费明细列表")
+    private List<ExpenseItem> expenses;
+
     private BigDecimal cost;
 
     @Schema(description = "实际开始时间")

@@ -39,9 +39,23 @@ public class PlanCheckinController {
         record.setDayId(dto.getDayId());
         record.setItemId(dto.getItemId());
         record.setContent(dto.getContent());
-        record.setCost(dto.getCost() != null ? dto.getCost() : BigDecimal.ZERO);
+        BigDecimal totalCost = BigDecimal.ZERO;
+        if (dto.getExpenses() != null && !dto.getExpenses().isEmpty()) {
+            for (CheckInDTO.ExpenseItem e : dto.getExpenses()) {
+                if (e.getAmount() != null && e.getAmount().compareTo(BigDecimal.ZERO) > 0) {
+                    totalCost = totalCost.add(e.getAmount());
+                }
+            }
+        } else if (dto.getCost() != null) {
+            totalCost = dto.getCost();
+        }
+        record.setCost(totalCost);
+
         if (dto.getImages() != null) {
             record.setImages(JSON.toJSONString(dto.getImages()));
+        }
+        if (dto.getExpenses() != null && !dto.getExpenses().isEmpty()) {
+            record.setExpenses(JSON.toJSONString(dto.getExpenses()));
         }
         checkinRecordService.save(record);
 
@@ -50,8 +64,8 @@ public class PlanCheckinController {
         if (item != null) {
             item.setCheckedIn(1);
             item.setCheckInTime(LocalDateTime.now());
-            if (dto.getCost() != null && dto.getCost().compareTo(BigDecimal.ZERO) > 0) {
-                item.setActualCost(dto.getCost());
+            if (totalCost.compareTo(BigDecimal.ZERO) > 0) {
+                item.setActualCost(totalCost);
             }
             if (dto.getActualStartTime() != null) {
                 item.setActualStartTime(dto.getActualStartTime());
@@ -69,8 +83,22 @@ public class PlanCheckinController {
             }
             travelItemService.updateById(item);
 
-            // 同步记录一笔消费账单，这会触发 TravelExpenseServiceImpl 中的 save 重写，自动累加更新 travel_plan.actual_cost
-            if (dto.getCost() != null && dto.getCost().compareTo(BigDecimal.ZERO) > 0) {
+            // 同步记录一笔或多笔消费账单
+            if (dto.getExpenses() != null && !dto.getExpenses().isEmpty()) {
+                for (CheckInDTO.ExpenseItem e : dto.getExpenses()) {
+                    if (e.getAmount() != null && e.getAmount().compareTo(BigDecimal.ZERO) > 0) {
+                        TravelExpense expense = new TravelExpense();
+                        expense.setUserId(userId);
+                        expense.setPlanId(dto.getPlanId());
+                        expense.setDayId(dto.getDayId());
+                        expense.setAmount(e.getAmount());
+                        expense.setType(e.getCostType() != null ? e.getCostType() : 6);
+                        expense.setRemark(item.getName() + " - 打卡记账");
+                        expense.setExpenseDate(LocalDate.now());
+                        travelExpenseService.save(expense);
+                    }
+                }
+            } else if (dto.getCost() != null && dto.getCost().compareTo(BigDecimal.ZERO) > 0) {
                 TravelExpense expense = new TravelExpense();
                 expense.setUserId(userId);
                 expense.setPlanId(dto.getPlanId());

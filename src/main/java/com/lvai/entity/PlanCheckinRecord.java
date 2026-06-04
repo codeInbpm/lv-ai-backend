@@ -16,6 +16,7 @@ public class PlanCheckinRecord {
     private String content;
     private BigDecimal cost;
     private String images; // stored as json string
+    private String expenses; // stored as json string
     @TableField(fill = FieldFill.INSERT)
     private LocalDateTime createTime;
     @TableField(fill = FieldFill.INSERT_UPDATE)

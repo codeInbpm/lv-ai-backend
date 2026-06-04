@@ -302,4 +302,21 @@ public class TravelPlanController {
 
         return Result.success();
     }
+
+    @GetMapping("/{planId}/ai-draft")
+    @Operation(summary = "获取行程的AI游记草稿")
+    public Result<com.lvai.entity.ContentDraft> getAiDraft(@PathVariable Long planId) {
+        Long userId = StpUtil.getLoginIdAsLong();
+        com.lvai.service.IContentDraftService contentDraftService = cn.hutool.extra.spring.SpringUtil.getBean(com.lvai.service.IContentDraftService.class);
+        
+        com.lvai.entity.ContentDraft draft = contentDraftService.getOne(
+                new LambdaQueryWrapper<com.lvai.entity.ContentDraft>()
+                        .eq(com.lvai.entity.ContentDraft::getPlanId, planId)
+                        .eq(com.lvai.entity.ContentDraft::getUserId, userId)
+                        .eq(com.lvai.entity.ContentDraft::getDraftType, 3)
+                        .orderByDesc(com.lvai.entity.ContentDraft::getCreateTime)
+                        .last("limit 1")
+        );
+        return Result.success(draft);
+    }
 }

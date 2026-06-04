@@ -250,12 +250,21 @@ public class TravelPlanServiceImpl extends ServiceImpl<TravelPlanMapper, TravelP
         return removeById(planId);
     }
 
+    @org.springframework.context.annotation.Lazy
+    @org.springframework.beans.factory.annotation.Autowired
+    private com.lvai.service.IContentDraftService contentDraftService;
+
     @Override
     public boolean updatePlanStatus(Long planId, Integer status) {
         TravelPlan plan = getById(planId);
         if (plan == null) throw new BusinessException("行程不存在");
         plan.setStatus(status);
-        return updateById(plan);
+        boolean updated = updateById(plan);
+        if (updated && status != null && status == 3) {
+            // 当行程状态变为 3 (已完成) 时，触发生成游记草稿
+            contentDraftService.generateDraftForPlan(planId, plan.getUserId());
+        }
+        return updated;
     }
 
     @Override
