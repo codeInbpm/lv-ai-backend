@@ -79,6 +79,12 @@ public class TravelItem {
     @Schema(description = "打卡备注")
     private String checkInNote;
 
+    @Schema(description = "实际开始时间")
+    private LocalDateTime actualStartTime;
+
+    @Schema(description = "实际打卡地点")
+    private String checkinLocation;
+
     @TableField(fill = FieldFill.INSERT)
     private LocalDateTime createTime;
 

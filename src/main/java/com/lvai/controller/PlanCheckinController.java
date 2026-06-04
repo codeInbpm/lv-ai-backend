@@ -1,14 +1,23 @@
 package com.lvai.controller;
+
 import cn.dev33.satoken.stp.StpUtil;
 import com.alibaba.fastjson2.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.lvai.common.Result;
 import com.lvai.dto.CheckInDTO;
 import com.lvai.entity.PlanCheckinRecord;
+import com.lvai.entity.TravelItem;
+import com.lvai.entity.TravelExpense;
 import com.lvai.service.IPlanCheckinRecordService;
+import com.lvai.service.ITravelItemService;
+import com.lvai.service.ITravelExpenseService;
+import com.lvai.service.IAiTravelCompanionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -17,8 +26,9 @@ import java.util.List;
 public class PlanCheckinController {
 
     private final IPlanCheckinRecordService checkinRecordService;
-    private final com.lvai.service.ITravelItemService travelItemService;
-    private final com.lvai.service.ITravelExpenseService travelExpenseService;
+    private final ITravelItemService travelItemService;
+    private final ITravelExpenseService travelExpenseService;
+    private final IAiTravelCompanionService aiTravelCompanionService;
 
     @PostMapping("/checkin")
     public Result<String> submitCheckin(@RequestBody CheckInDTO dto) {
@@ -29,46 +39,75 @@ public class PlanCheckinController {
         record.setDayId(dto.getDayId());
         record.setItemId(dto.getItemId());
         record.setContent(dto.getContent());
-        record.setCost(dto.getCost());
+        record.setCost(dto.getCost() != null ? dto.getCost() : BigDecimal.ZERO);
         if (dto.getImages() != null) {
             record.setImages(JSON.toJSONString(dto.getImages()));
         }
         checkinRecordService.save(record);
 
-        // 更新 TravelItem 状态
-        com.lvai.entity.TravelItem item = travelItemService.getById(dto.getItemId());
+        // 更新 TravelItem 状态与打卡轨迹信息
+        TravelItem item = travelItemService.getById(dto.getItemId());
         if (item != null) {
             item.setCheckedIn(1);
-            item.setCheckInTime(java.time.LocalDateTime.now());
-            if (dto.getCost() != null && dto.getCost().compareTo(java.math.BigDecimal.ZERO) > 0) {
+            item.setCheckInTime(LocalDateTime.now());
+            if (dto.getCost() != null && dto.getCost().compareTo(BigDecimal.ZERO) > 0) {
                 item.setActualCost(dto.getCost());
+            }
+            if (dto.getActualStartTime() != null) {
+                item.setActualStartTime(dto.getActualStartTime());
+            } else {
+                item.setActualStartTime(LocalDateTime.now());
+            }
+            if (dto.getCheckinLocation() != null) {
+                item.setCheckinLocation(dto.getCheckinLocation());
+            }
+            if (dto.getContent() != null) {
+                item.setCheckInNote(dto.getContent());
+            }
+            if (dto.getImages() != null) {
+                item.setCheckInPhotos(JSON.toJSONString(dto.getImages()));
             }
             travelItemService.updateById(item);
 
-            // 记录一笔账单
-            if (dto.getCost() != null && dto.getCost().compareTo(java.math.BigDecimal.ZERO) > 0) {
-                com.lvai.entity.TravelExpense expense = new com.lvai.entity.TravelExpense();
+            // 同步记录一笔消费账单，这会触发 TravelExpenseServiceImpl 中的 save 重写，自动累加更新 travel_plan.actual_cost
+            if (dto.getCost() != null && dto.getCost().compareTo(BigDecimal.ZERO) > 0) {
+                TravelExpense expense = new TravelExpense();
                 expense.setUserId(userId);
                 expense.setPlanId(dto.getPlanId());
                 expense.setDayId(dto.getDayId());
                 expense.setAmount(dto.getCost());
-                
+
+                // 默认映射逻辑
                 int itemType = item.getType() != null ? item.getType() : 6;
                 int expenseType = 6;
-                if (itemType == 1) expenseType = 4; // 景点 -> 门票
+                if (itemType == 1) expenseType = 4;      // 景点 -> 门票
                 else if (itemType == 2) expenseType = 1; // 美食 -> 餐饮
                 else if (itemType == 3) expenseType = 2; // 酒店 -> 住宿
                 else if (itemType == 4) expenseType = 3; // 交通 -> 交通
                 else if (itemType == 5) expenseType = 5; // 购物 -> 购物
-                
-                expense.setType(expenseType);
-                expense.setRemark(item.getName());
-                expense.setExpenseDate(java.time.LocalDate.now());
+
+                expense.setType(dto.getCostType() != null ? dto.getCostType() : expenseType);
+                expense.setRemark(item.getName() + " - 打卡记账");
+                expense.setExpenseDate(LocalDate.now());
                 travelExpenseService.save(expense);
             }
         }
 
         return Result.success("打卡成功");
+    }
+
+    @PostMapping("/checkin/ai-suggest")
+    public Result<String> aiSuggestCheckin(@RequestParam Long itemId, @RequestParam(required = false) String userInput) {
+        long userId = StpUtil.getLoginIdAsLong();
+        String answer = aiTravelCompanionService.callAiForCheckin(itemId, userInput, userId);
+        return Result.success("success", answer);
+    }
+
+    @PostMapping("/checkin/daily-summary")
+    public Result<String> dailySummary(@RequestParam Long planId, @RequestParam Long dayId) {
+        long userId = StpUtil.getLoginIdAsLong();
+        String answer = aiTravelCompanionService.generateDailySummary(planId, dayId, userId);
+        return Result.success("success", answer);
     }
 
     @GetMapping("/{planId}/checkins")

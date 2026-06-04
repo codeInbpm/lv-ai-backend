@@ -46,4 +46,10 @@ public class CheckInDTO {
     private List<String> images;
 
     private BigDecimal cost;
+
+    @Schema(description = "实际开始时间")
+    private java.time.LocalDateTime actualStartTime;
+
+    @Schema(description = "实际打卡地点")
+    private String checkinLocation;
 }

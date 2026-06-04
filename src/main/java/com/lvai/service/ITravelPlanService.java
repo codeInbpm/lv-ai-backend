@@ -15,10 +15,8 @@ public interface ITravelPlanService extends IService<TravelPlan> {
     IPage<TravelPlan> getPublicPlans(PlanQueryDTO dto);
     TravelPlan updatePlan(TravelPlan plan);
     boolean deletePlan(Long planId);
-
     boolean updatePlanStatus(Long planId, Integer status);
-
     boolean toggleCollection(Long planId);
-
     Long clonePlan(Long planId);
+    void updatePlanActualCost(Long planId);
 }

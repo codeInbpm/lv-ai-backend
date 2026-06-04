@@ -37,6 +37,7 @@ public class TravelPlanServiceImpl extends ServiceImpl<TravelPlanMapper, TravelP
     private final TravelDayServiceImpl travelDayService;
     private final TravelItemServiceImpl travelItemService;
     private final UserCollectionServiceImpl userCollectionService;
+    private final com.lvai.service.ITravelExpenseService travelExpenseService;
 
     @org.springframework.context.annotation.Lazy
     @org.springframework.beans.factory.annotation.Autowired
@@ -370,5 +371,23 @@ public class TravelPlanServiceImpl extends ServiceImpl<TravelPlanMapper, TravelP
         }
 
         return clonedPlan.getId();
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void updatePlanActualCost(Long planId) {
+        com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<com.lvai.entity.TravelExpense> queryWrapper = new com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<>();
+        queryWrapper.eq("plan_id", planId);
+        queryWrapper.select("sum(amount) as totalAmount");
+        java.util.Map<String, Object> map = travelExpenseService.getMap(queryWrapper);
+        BigDecimal totalCost = BigDecimal.ZERO;
+        if (map != null && map.get("totalAmount") != null) {
+            totalCost = new BigDecimal(map.get("totalAmount").toString());
+        }
+        TravelPlan plan = getById(planId);
+        if (plan != null) {
+            plan.setActualCost(totalCost);
+            updateById(plan);
+        }
     }
 }
