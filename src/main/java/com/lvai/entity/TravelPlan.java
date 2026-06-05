@@ -93,6 +93,10 @@ public class TravelPlan {
     @TableField(fill = FieldFill.INSERT_UPDATE)
     private LocalDateTime updateTime;
 
+    @TableField(exist = false)
+    @Schema(description = "行程打卡进度(百分比)")
+    private Integer progress;
+
     @TableLogic
     private Integer deleted;
 }

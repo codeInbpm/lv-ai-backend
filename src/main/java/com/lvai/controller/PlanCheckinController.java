@@ -12,6 +12,10 @@ import com.lvai.service.IPlanCheckinRecordService;
 import com.lvai.service.ITravelItemService;
 import com.lvai.service.ITravelExpenseService;
 import com.lvai.service.IAiTravelCompanionService;
+import com.lvai.service.ITravelDayService;
+import com.lvai.service.ITravelPlanService;
+import com.lvai.entity.TravelDay;
+import com.lvai.entity.TravelPlan;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -29,6 +33,8 @@ public class PlanCheckinController {
     private final ITravelItemService travelItemService;
     private final ITravelExpenseService travelExpenseService;
     private final IAiTravelCompanionService aiTravelCompanionService;
+    private final ITravelDayService travelDayService;
+    private final ITravelPlanService travelPlanService;
 
     @PostMapping("/checkin")
     public Result<String> submitCheckin(@RequestBody CheckInDTO dto) {
@@ -82,6 +88,33 @@ public class PlanCheckinController {
                 item.setCheckInPhotos(JSON.toJSONString(dto.getImages()));
             }
             travelItemService.updateById(item);
+
+            // 1. 联动检查该天下的行程明细项是否都已打卡完成。如果是，标记 travel_day 为完成 (finished = 1)
+            List<TravelItem> dayItems = travelItemService.list(
+                    new LambdaQueryWrapper<TravelItem>()
+                            .eq(TravelItem::getDayId, item.getDayId())
+            );
+            boolean dayFinished = dayItems.stream().allMatch(it -> it.getCheckedIn() != null && it.getCheckedIn() == 1);
+            if (dayFinished) {
+                TravelDay day = travelDayService.getById(item.getDayId());
+                if (day != null && (day.getFinished() == null || day.getFinished() == 0)) {
+                    day.setFinished(1);
+                    travelDayService.updateById(day);
+                }
+            }
+
+            // 2. 联动检查行程的所有项是否都已打卡完成。如果是，标记 travel_plan 状态为已完成 (status = 3)
+            List<TravelItem> planItems = travelItemService.list(
+                    new LambdaQueryWrapper<TravelItem>()
+                            .eq(TravelItem::getPlanId, item.getPlanId())
+            );
+            boolean planFinished = planItems.stream().allMatch(it -> it.getCheckedIn() != null && it.getCheckedIn() == 1);
+            if (planFinished) {
+                TravelPlan plan = travelPlanService.getById(item.getPlanId());
+                if (plan != null && (plan.getStatus() == null || plan.getStatus() != 3)) {
+                    travelPlanService.updatePlanStatus(item.getPlanId(), 3);
+                }
+            }
 
             // 同步记录一笔或多笔消费账单
             if (dto.getExpenses() != null && !dto.getExpenses().isEmpty()) {

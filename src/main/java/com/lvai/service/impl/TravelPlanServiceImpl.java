@@ -218,13 +218,60 @@ public class TravelPlanServiceImpl extends ServiceImpl<TravelPlanMapper, TravelP
         return vo;
     }
 
+    private int calculatePlanProgress(Long planId) {
+        List<TravelDay> days = travelDayService.list(
+                new LambdaQueryWrapper<TravelDay>().eq(TravelDay::getPlanId, planId)
+        );
+        if (days.isEmpty()) {
+            return 0;
+        }
+        List<Long> dayIds = days.stream().map(TravelDay::getId).collect(java.util.stream.Collectors.toList());
+        List<TravelItem> items = travelItemService.list(
+                new LambdaQueryWrapper<TravelItem>().in(TravelItem::getDayId, dayIds)
+        );
+        if (items.isEmpty()) {
+            return 0;
+        }
+        long finishedCount = items.stream()
+                .filter(it -> it.getCheckedIn() != null && it.getCheckedIn() == 1)
+                .count();
+        return (int) Math.round(((double) finishedCount / items.size()) * 100);
+    }
+
     @Override
     public IPage<TravelPlan> getUserPlans(Long userId, Integer status, int page, int size) {
+        // 1. 查询该用户旗下所有非已完成的行程，若是 100% 进度则在库中纠正为 3，并启动 AI 游记生成
+        List<TravelPlan> notFinishedPlans = list(
+                new LambdaQueryWrapper<TravelPlan>()
+                        .eq(TravelPlan::getUserId, userId)
+                        .and(q -> q.ne(TravelPlan::getStatus, 3).or().isNull(TravelPlan::getStatus))
+        );
+        
+        for (TravelPlan plan : notFinishedPlans) {
+            int progressVal = calculatePlanProgress(plan.getId());
+            if (progressVal == 100) {
+                plan.setStatus(3);
+                updateById(plan);
+                contentDraftService.generateDraftForPlan(plan.getId(), userId);
+            }
+        }
+
+        // 2. 然后按照常规状态参数进行分页查询
         LambdaQueryWrapper<TravelPlan> wrapper = new LambdaQueryWrapper<TravelPlan>()
                 .eq(TravelPlan::getUserId, userId)
                 .orderByDesc(TravelPlan::getCreateTime);
         if (status != null) wrapper.eq(TravelPlan::getStatus, status);
-        return page(new Page<>(page, size), wrapper);
+        
+        IPage<TravelPlan> planPage = page(new Page<>(page, size), wrapper);
+        
+        // 3. 实时计算并装配当前页每项行程卡片的进度
+        for (TravelPlan plan : planPage.getRecords()) {
+            int prog = calculatePlanProgress(plan.getId());
+            log.info("### 行程列表计算进度: planId={}, title={}, progress={}", plan.getId(), plan.getTitle(), prog);
+            plan.setProgress(prog);
+        }
+        
+        return planPage;
     }
 
     @Override
